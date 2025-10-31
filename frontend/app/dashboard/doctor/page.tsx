@@ -1,0 +1,662 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
+import { DashboardLayout } from '@/components/dashboard-layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { SmartCaseManagement } from '@/components/smart-case-management';
+import { ImageViewer } from '@/components/image-viewer';
+import { SmartPrescription } from '@/components/smart-prescription';
+import api from '@/lib/api';
+import { 
+  Users, 
+  FileText, 
+  Eye, 
+  CheckCircle, 
+  XCircle, 
+  Bell, 
+  BarChart3, 
+  Brain,
+  MessageSquare,
+  Calendar,
+  TrendingUp,
+  AlertCircle,
+  Settings,
+  Send,
+  Plus
+} from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+export default function DoctorDashboard() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('cases');
+  const [cases, setCases] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [selectedCase, setSelectedCase] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [showPrescription, setShowPrescription] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !['doctor', 'admin'].includes(user?.role || '')) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+      loadNotifications();
+      loadAnalytics();
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      const [casesRes, aptsRes] = await Promise.all([
+        api.get('/cases/my-cases'),
+        api.get('/doctors/appointments'),
+      ]);
+      setCases(casesRes.data || []);
+      setAppointments(aptsRes.data || []);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    }
+  };
+
+  const loadNotifications = async () => {
+    try {
+      const [notifsRes, countRes] = await Promise.all([
+        api.get('/notifications'),
+        api.get('/notifications/unread-count'),
+      ]);
+      setNotifications(notifsRes.data || []);
+      setUnreadCount(countRes.data?.count || 0);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
+
+  const loadAnalytics = async () => {
+    try {
+      const res = await api.get('/analytics/doctor-performance');
+      setAnalytics(res.data);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    }
+  };
+
+  const markNotificationRead = async (notificationId: string) => {
+    try {
+      await api.put(`/notifications/${notificationId}/read`);
+      loadNotifications();
+    } catch (error) {
+      console.error('Error marking notification read:', error);
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      await api.put('/notifications/mark-all-read');
+      loadNotifications();
+      toast({ title: 'Success', description: 'All notifications marked as read' });
+    } catch (error) {
+      console.error('Error marking all read:', error);
+    }
+  };
+
+  const handlePrescriptionSave = async (prescription: any) => {
+    try {
+      const res = await api.post('/prescriptions', {
+        ...prescription,
+        doctorId: user?.id,
+      });
+      toast({ title: 'Success', description: 'Prescription created successfully' });
+      setShowPrescription(false);
+      setSelectedPatient(null);
+      loadData();
+      
+      // Automatically assign to pharmacy if glasses are included
+      if (prescription.glasses && prescription.glasses.length > 0) {
+        // You can add logic here to assign to a specific pharmacy
+        toast({ title: 'Info', description: 'Prescription with glasses can be assigned to optical shop' });
+      }
+      
+      return res.data;
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to create prescription',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const handleCaseSelect = (caseData: any) => {
+    setSelectedCase(caseData);
+    setSelectedPatient(caseData.patientId);
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  // Analytics data for charts
+  const diseaseDistribution = analytics ? [
+    { name: 'Normal', value: 45, color: '#10b981' },
+    { name: 'Cataract', value: 25, color: '#f59e0b' },
+    { name: 'Glaucoma', value: 15, color: '#ef4444' },
+    { name: 'Diabetic Retinopathy', value: 15, color: '#8b5cf6' },
+  ] : [];
+
+  const performanceData = analytics ? [
+    { name: 'Week 1', cases: 12, prescriptions: 15 },
+    { name: 'Week 2', cases: 18, prescriptions: 20 },
+    { name: 'Week 3', cases: 15, prescriptions: 18 },
+    { name: 'Week 4', cases: 22, prescriptions: 25 },
+  ] : [];
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Users className="h-8 w-8 text-primary" />
+              Doctor Dashboard
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Smart case management with AI-assisted diagnosis and treatment
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              className="relative"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </Button>
+            <Button onClick={() => setActiveTab('analytics')}>
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">My Cases</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{cases.length}</div>
+              <p className="text-xs text-muted-foreground">
+                {cases.filter((c: any) => c.priority === 'urgent' || c.priority === 'high').length} urgent
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Appointments</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{appointments.length}</div>
+              <p className="text-xs text-muted-foreground">Scheduled</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Unread Alerts</CardTitle>
+              <AlertCircle className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{unreadCount}</div>
+              <p className="text-xs text-muted-foreground">Requires attention</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">AI Agreement</CardTitle>
+              <Brain className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {analytics?.aiAgreementRate ? `${analytics.aiAgreementRate.toFixed(1)}%` : 'N/A'}
+              </div>
+              <p className="text-xs text-muted-foreground">Diagnosis accuracy</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Notifications Panel */}
+        {showNotifications && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Notifications</CardTitle>
+                  <CardDescription>Recent alerts and updates</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={markAllNotificationsRead}>
+                    Mark All Read
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setShowNotifications(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {notifications.length > 0 ? (
+                  notifications.map((notif: any) => (
+                    <div
+                      key={notif._id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        !notif.isRead ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+                      }`}
+                      onClick={() => markNotificationRead(notif._id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge
+                              className={
+                                notif.priority === 'urgent'
+                                  ? 'bg-red-100 text-red-800'
+                                  : notif.priority === 'high'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }
+                            >
+                              {notif.priority}
+                            </Badge>
+                            {!notif.isRead && (
+                              <span className="h-2 w-2 bg-blue-500 rounded-full"></span>
+                            )}
+                          </div>
+                          <p className="font-medium">{notif.title}</p>
+                          <p className="text-sm text-muted-foreground">{notif.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(notif.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">No notifications</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Main Content Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="cases">Case Management</TabsTrigger>
+            <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="cases-view">Case Details</TabsTrigger>
+          </TabsList>
+
+          {/* Case Management Tab */}
+          <TabsContent value="cases" className="space-y-4">
+            <SmartCaseManagement 
+              doctorId={user?.id || ''} 
+              onCaseSelect={(caseData) => {
+                handleCaseSelect(caseData);
+                setActiveTab('cases-view');
+              }}
+            />
+          </TabsContent>
+
+          {/* Prescriptions Tab */}
+          <TabsContent value="prescriptions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Smart Prescription Management</CardTitle>
+                  <CardDescription>Create prescriptions with AI suggestions and templates</CardDescription>
+                </div>
+                {!showPrescription && (
+                  <Button onClick={() => setShowPrescription(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Prescription
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+              <CardContent>
+                {showPrescription ? (
+                  <SmartPrescription
+                    patientId={selectedPatient?._id || selectedPatient}
+                    diagnosis={selectedCase?.diagnosis}
+                    onSave={handlePrescriptionSave}
+                    allowPatientSelection={true}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm text-muted-foreground">
+                        Your prescriptions
+                      </p>
+                      <Button onClick={() => setShowPrescription(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create New Prescription
+                      </Button>
+                    </div>
+                    {/* Show existing prescriptions */}
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        View prescriptions from Case Management or create a new one.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="grid gap-4">
+              {/* Performance Metrics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Doctor Performance</CardTitle>
+                  <CardDescription>Your key performance indicators</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {analytics ? (
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-1">Cases Reviewed</p>
+                        <p className="text-2xl font-bold">{analytics.casesReviewed || 0}</p>
+                      </div>
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-1">Prescriptions</p>
+                        <p className="text-2xl font-bold">{analytics.prescriptions || 0}</p>
+                      </div>
+                      <div className="p-4 bg-purple-50 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-1">Avg Response Time</p>
+                        <p className="text-2xl font-bold">
+                          {analytics.avgResponseTime ? `${analytics.avgResponseTime.toFixed(1)} min` : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">Loading analytics...</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Charts */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Disease Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={diseaseDistribution}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {diseaseDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Weekly Performance</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={performanceData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="cases" stroke="#8884d8" name="Cases" />
+                        <Line type="monotone" dataKey="prescriptions" stroke="#82ca9d" name="Prescriptions" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* AI Comparison */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>AI vs Doctor Diagnosis</CardTitle>
+                  <CardDescription>Comparison of AI recommendations vs your diagnoses</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">AI Agreement Rate</p>
+                        <p className="text-3xl font-bold text-purple-600">
+                          {analytics?.aiAgreementRate ? `${analytics.aiAgreementRate.toFixed(1)}%` : 'N/A'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Your diagnoses align with AI recommendations
+                        </p>
+                      </div>
+                      <Brain className="h-16 w-16 text-purple-200" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Case Details View */}
+          <TabsContent value="cases-view" className="space-y-4">
+            {selectedCase ? (
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Case Overview */}
+                <div className="lg:col-span-2 space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Case Overview</CardTitle>
+                      <CardDescription>Complete case information and timeline</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <h3 className="font-medium mb-2">Patient Information</h3>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <p className="font-medium">
+                            {selectedCase.patientId?.firstName} {selectedCase.patientId?.lastName}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{selectedCase.patientId?.email}</p>
+                          <p className="text-sm text-muted-foreground">{selectedCase.patientId?.phone}</p>
+                        </div>
+                      </div>
+
+                      {selectedCase.aiInsights && (
+                        <div>
+                          <h3 className="font-medium mb-2 flex items-center gap-2">
+                            <Brain className="h-4 w-4 text-primary" />
+                            AI Insights
+                          </h3>
+                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">Urgency Score:</span>
+                              <Badge className="bg-purple-600">{selectedCase.aiInsights.urgency}%</Badge>
+                            </div>
+                            {selectedCase.aiInsights.riskFactors.length > 0 && (
+                              <div>
+                                <p className="text-sm font-medium mb-1">Risk Factors:</p>
+                                <ul className="text-sm list-disc list-inside text-red-600">
+                                  {selectedCase.aiInsights.riskFactors.map((risk: string, i: number) => (
+                                    <li key={i}>{risk}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {selectedCase.aiInsights.recommendations.length > 0 && (
+                              <div>
+                                <p className="text-sm font-medium mb-1">Recommendations:</p>
+                                <ul className="text-sm list-disc list-inside">
+                                  {selectedCase.aiInsights.recommendations.map((rec: string, i: number) => (
+                                    <li key={i}>{rec}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Timeline */}
+                      <div>
+                        <h3 className="font-medium mb-3">Case Timeline</h3>
+                        <div className="space-y-3">
+                          {selectedCase.timeline && selectedCase.timeline.length > 0 ? (
+                            selectedCase.timeline.map((entry: any, index: number) => (
+                              <div key={index} className="flex gap-3 border-l-2 border-primary pl-4">
+                                <div className="flex-shrink-0 w-3 h-3 bg-primary rounded-full -ml-[19px] mt-2" />
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium">{entry.description}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(entry.timestamp).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-muted-foreground text-sm">No timeline entries</p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Actions Sidebar */}
+                <div className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <Button
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedPatient(selectedCase.patientId);
+                          setShowPrescription(true);
+                          setActiveTab('prescriptions');
+                        }}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Create Prescription
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          router.push(`/dashboard/patient/chat?patientId=${selectedCase.patientId?._id}`);
+                        }}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Chat with Patient
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          router.push(`/dashboard/doctor/appointments?patientId=${selectedCase.patientId?._id}`);
+                        }}
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Schedule Follow-up
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Image Viewer */}
+                  {selectedCase.eyeTestId?.retinaImages && 
+                   selectedCase.eyeTestId.retinaImages.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Retina Images</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ImageViewer
+                          images={selectedCase.eyeTestId.retinaImages}
+                          showHeatmap={true}
+                          heatmapData={[
+                            { x: 30, y: 40, intensity: 0.7 },
+                            { x: 60, y: 50, intensity: 0.5 },
+                            { x: 45, y: 35, intensity: 0.6 },
+                          ]}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Eye className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    Select a case from Case Management to view details
+                  </p>
+                  <Button className="mt-4" onClick={() => setActiveTab('cases')}>
+                    View Cases
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
+  );
+}
