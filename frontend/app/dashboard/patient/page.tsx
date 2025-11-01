@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-provider';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,6 +63,7 @@ import {
 
 export default function PatientDashboard() {
   const { user, loading } = useAuth();
+  const { theme, language, setTheme, setLanguage } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
@@ -79,8 +81,6 @@ export default function PatientDashboard() {
   const [bookingData, setBookingData] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [settings, setSettings] = useState({
-    language: 'en',
-    theme: 'light',
     highContrast: false,
     largeText: false,
     voiceFeedback: false,
@@ -156,8 +156,7 @@ export default function PatientDashboard() {
         appointmentDate: suggestion.suggestedDate,
         appointmentTime: selectedTime,
         reason: 'Eye care consultation',
-        urgency: suggestion.urgency,
-        status: 'scheduled',
+        status: 'pending', // Use valid enum value: pending, confirmed, completed, cancelled
       };
 
       const res = await api.post('/appointments', appointmentData);
@@ -166,11 +165,13 @@ export default function PatientDashboard() {
         description: `Appointment booked with Dr. ${suggestion.doctorName} on ${new Date(suggestion.suggestedDate).toLocaleDateString()} at ${selectedTime}` 
       });
       setShowBookingModal(false);
+      setBookingData(null);
       loadAllData();
     } catch (error: any) {
+      console.error('Appointment booking error:', error);
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to book appointment',
+        description: error.response?.data?.message || error.message || 'Failed to book appointment. Please try again.',
         variant: 'destructive',
       });
     }
@@ -261,7 +262,7 @@ export default function PatientDashboard() {
 
   const handleSaveSettings = async () => {
     try {
-      await api.put('/patients/profile', { preferences: settings });
+      await api.put('/patients/profile', { preferences: { ...settings, theme, language } });
       toast({ title: 'Success', description: 'Settings saved successfully' });
     } catch (error: any) {
       toast({
@@ -350,7 +351,7 @@ export default function PatientDashboard() {
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-accent/10 text-accent-foreground dark:bg-accent/20';
     }
   };
 
@@ -383,7 +384,7 @@ export default function PatientDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 patient-portal" data-portal="patient">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -545,7 +546,7 @@ export default function PatientDashboard() {
                 {unifiedJourney?.timeline && unifiedJourney.timeline.length > 0 ? (
                   <div className="space-y-3">
                     {unifiedJourney.timeline.slice(0, 5).map((item: any, idx: number) => (
-                      <div key={idx} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50">
+                      <div key={idx} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors">
                         <div className="mt-1">{getTypeIcon(item.type)}</div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -575,7 +576,7 @@ export default function PatientDashboard() {
 
             {/* Quick Actions */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className="cursor-pointer hover:bg-gray-50" onClick={() => handleBookAppointment()}>
+              <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => handleBookAppointment()}>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Plus className="h-5 w-5" />
@@ -587,7 +588,7 @@ export default function PatientDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:bg-gray-50" onClick={() => router.push('/dashboard/patient/chat')}>
+              <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => router.push('/dashboard/patient/chat')}>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <MessageCircle className="h-5 w-5" />
@@ -599,7 +600,7 @@ export default function PatientDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('health-records')}>
+              <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => setActiveTab('health-records')}>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <FileText className="h-5 w-5" />
@@ -611,7 +612,7 @@ export default function PatientDashboard() {
                 </CardContent>
               </Card>
 
-              <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('prescriptions')}>
+              <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => setActiveTab('prescriptions')}>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Pill className="h-5 w-5" />
@@ -856,7 +857,7 @@ export default function PatientDashboard() {
               <CardContent>
                 {/* Comparative Analysis */}
                 {comparativeAnalysis && (
-                  <Card className="mb-4 border-l-4 border-l-purple-500">
+                  <Card className="mb-4 border-l-4 border-l-accent">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="h-5 w-5" />
@@ -869,7 +870,7 @@ export default function PatientDashboard() {
                           <div>
                             <p className="font-medium mb-2">Visual Acuity Comparison:</p>
                             <div className="grid grid-cols-2 gap-4">
-                              <div className="p-3 bg-gray-50 rounded">
+                              <div className="p-3 bg-accent/10 dark:bg-accent/20 rounded">
                                 <p className="text-sm font-medium">Right Eye</p>
                                 <p className="text-xs text-muted-foreground">
                                   Previous: {comparativeAnalysis.visualAcuity.right.previous}
@@ -881,7 +882,7 @@ export default function PatientDashboard() {
                                   {comparativeAnalysis.visualAcuity.right.change}
                                 </Badge>
                               </div>
-                              <div className="p-3 bg-gray-50 rounded">
+                              <div className="p-3 bg-accent/10 dark:bg-accent/20 rounded">
                                 <p className="text-sm font-medium">Left Eye</p>
                                 <p className="text-xs text-muted-foreground">
                                   Previous: {comparativeAnalysis.visualAcuity.left.previous}
@@ -969,7 +970,7 @@ export default function PatientDashboard() {
                               )}
                               
                               {item.doctorNotes && (
-                                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                                <div className="mt-2 p-2 bg-accent/10 dark:bg-accent/20 rounded text-sm">
                                   <p className="font-medium mb-1">Doctor Notes:</p>
                                   <p className="text-muted-foreground">{item.doctorNotes}</p>
                                 </div>
@@ -1067,7 +1068,7 @@ export default function PatientDashboard() {
                               )}
 
                               {prescription.notes && (
-                                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                                <div className="mt-2 p-2 bg-accent/10 dark:bg-accent/20 rounded text-sm">
                                   <p className="font-medium mb-1">Doctor Notes:</p>
                                   <p className="text-muted-foreground">{prescription.notes}</p>
                                 </div>
@@ -1119,7 +1120,7 @@ export default function PatientDashboard() {
 
                               {/* QR Code Display */}
                               {prescription.metadata?.qrCode && (
-                                <div className="mt-3 p-3 bg-gray-50 rounded border">
+                                <div className="mt-3 p-3 bg-accent/10 dark:bg-accent/20 rounded border">
                                   <p className="text-xs font-medium mb-2">QR Code:</p>
                                   <img 
                                     src={prescription.metadata.qrCode} 
@@ -1204,7 +1205,7 @@ export default function PatientDashboard() {
                                 </div>
                                 <p className="text-lg font-bold">${invoice.amount.toLocaleString()}</p>
                                 {invoice.items && invoice.items.length > 0 && (
-                                  <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                                  <div className="mt-2 p-2 bg-accent/10 dark:bg-accent/20 rounded text-sm">
                                     <p className="font-medium mb-1">Items:</p>
                                     <ul className="text-muted-foreground space-y-1">
                                       {invoice.items.map((item: any, i: number) => (
@@ -1323,7 +1324,7 @@ export default function PatientDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Card className="cursor-pointer hover:bg-gray-50" onClick={() => router.push('/dashboard/patient/chat')}>
+                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => router.push('/dashboard/patient/chat')}>
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <MessageCircle className="h-5 w-5" />
@@ -1335,7 +1336,7 @@ export default function PatientDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-gray-50" onClick={() => {
+                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => {
                     toast({ 
                       title: 'Teleconsultation', 
                       description: 'Video consultation feature will be available soon. You can start a video call with your doctor for remote consultations.' 
@@ -1352,7 +1353,7 @@ export default function PatientDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-gray-50 border-red-200" onClick={() => {
+                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors border-red-200" onClick={() => {
                     router.push('/dashboard/patient/chat?emergency=true');
                     toast({ 
                       title: 'Emergency Support', 
@@ -1370,7 +1371,7 @@ export default function PatientDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-gray-50" onClick={() => {
+                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => {
                     toast({ 
                       title: 'Feedback & Ratings', 
                       description: 'Feedback system will be available soon. You can rate your doctor, visit, or pharmacy experience.' 
@@ -1441,9 +1442,9 @@ export default function PatientDashboard() {
                 <div>
                   <Label>Language</Label>
                   <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
-                    value={settings.language}
-                    onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value as 'en' | 'ar')}
                   >
                     <option value="en">English</option>
                     <option value="ar">Arabic (العربية)</option>
@@ -1452,9 +1453,9 @@ export default function PatientDashboard() {
                 <div>
                   <Label>Theme</Label>
                   <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
-                    value={settings.theme}
-                    onChange={(e) => setSettings({ ...settings, theme: e.target.value })}
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                    value={theme}
+                    onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'auto')}
                   >
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>

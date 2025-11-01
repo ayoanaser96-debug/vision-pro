@@ -234,7 +234,7 @@ export function SmartCaseManagement({ doctorId, onCaseSelect }: SmartCaseManagem
                     <div
                       key={caseItem._id}
                       className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedCase?._id === caseItem._id ? 'bg-primary/10 border-primary' : 'hover:bg-gray-50'
+                        selectedCase?._id === caseItem._id ? 'bg-primary/10 border-primary' : 'hover:bg-accent'
                       }`}
                       onClick={() => {
                         setSelectedCase(caseItem);

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserDocument, UserDocumentDocument, DocumentType } from './schemas/user-document.schema';
-import { createWorker } from 'tesseract.js';
 
 @Injectable()
 export class DocumentScannerService {
@@ -94,7 +93,8 @@ export class DocumentScannerService {
     documentType: DocumentType,
   ): Promise<any> {
     try {
-      // Use Tesseract.js for OCR
+      // Use Tesseract.js for OCR (dynamically imported to handle optional dependency)
+      const { createWorker } = await import('tesseract.js');
       const worker = await createWorker('eng');
       const { data } = await worker.recognize(imageBuffer);
       await worker.terminate();
@@ -104,11 +104,12 @@ export class DocumentScannerService {
 
       return extractedData;
     } catch (error: any) {
-      console.error('OCR error:', error);
+      console.error('OCR error:', error.message);
       // Return basic structure even if OCR fails
       return {
         rawText: '',
         documentType,
+        ocrError: error.message,
       };
     }
   }

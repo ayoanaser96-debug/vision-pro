@@ -132,5 +132,22 @@ export class AdminController {
   async getSecurityStatus() {
     return this.adminEnhancedService.getSecurityStatus();
   }
+
+  // System Settings
+  @Get('settings')
+  async getSettings() {
+    return this.adminEnhancedService.getSettings();
+  }
+
+  @Put('settings')
+  async updateSettings(@Body() settings: any) {
+    return this.adminEnhancedService.updateSettings(settings);
+  }
+
+  // Device Management
+  @Post('devices/:deviceId/calibrate')
+  async calibrateDevice(@Param('deviceId') deviceId: string) {
+    return this.adminEnhancedService.calibrateDevice(deviceId);
+  }
 }
 

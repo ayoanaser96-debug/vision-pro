@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-provider';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,8 +59,10 @@ import {
 
 export default function PharmacyDashboard() {
   const { user, loading } = useAuth();
+  const { theme, language, currency, setTheme, setLanguage, setCurrency } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
+  const [savingSettings, setSavingSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('prescriptions');
   const [prescriptions, setPrescriptions] = useState([]);
   const [inventory, setInventory] = useState([]);
@@ -489,6 +492,25 @@ export default function PharmacyDashboard() {
                                 <Brain className="h-4 w-4 mr-2" />
                                 AI Suggestions
                               </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const doctorId = prescription.doctorId?._id || prescription.doctorId;
+                                  if (doctorId) {
+                                    router.push(`/dashboard/pharmacy/chat?doctorId=${doctorId}&prescriptionId=${prescription._id}`);
+                                  } else {
+                                    toast({
+                                      title: 'Error',
+                                      description: 'Doctor not found for this prescription',
+                                      variant: 'destructive',
+                                    });
+                                  }
+                                }}
+                              >
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Chat with Doctor
+                              </Button>
                               
                               {prescription.status === 'pending' && (
                                 <>
@@ -607,10 +629,7 @@ export default function PharmacyDashboard() {
                     <CardTitle>Inventory & Stock Management</CardTitle>
                     <CardDescription>Real-time stock levels, expiry tracking, and batch management</CardDescription>
                   </div>
-                  <Button onClick={() => {
-                    // Open add item modal or form
-                    toast({ title: 'Info', description: 'Add inventory item form will open here' });
-                  }}>
+                  <Button onClick={() => router.push('/dashboard/pharmacy/inventory/add')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Item
                   </Button>
@@ -1055,7 +1074,7 @@ export default function PharmacyDashboard() {
                   <p className="text-sm text-muted-foreground mt-2">
                     Use this to communicate with doctors about prescriptions
                   </p>
-                  <Button className="mt-4" onClick={() => router.push('/dashboard/patient/chat')}>
+                  <Button className="mt-4" onClick={() => router.push('/dashboard/pharmacy/chat')}>
                     Open Chat
                   </Button>
                 </div>
@@ -1073,7 +1092,11 @@ export default function PharmacyDashboard() {
               <CardContent className="space-y-4">
                 <div>
                   <Label>Currency</Label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2">
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                  >
                     <option value="USD">USD ($)</option>
                     <option value="IQD">IQD (ع.د)</option>
                     <option value="EUR">EUR (€)</option>
@@ -1081,20 +1104,50 @@ export default function PharmacyDashboard() {
                 </div>
                 <div>
                   <Label>Language</Label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2">
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value as 'en' | 'ar')}
+                  >
                     <option value="en">English</option>
                     <option value="ar">Arabic (العربية)</option>
                   </select>
                 </div>
                 <div>
                   <Label>Theme</Label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2">
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                    value={theme}
+                    onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'auto')}
+                  >
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                     <option value="auto">Auto</option>
                   </select>
                 </div>
-                <Button>Save Settings</Button>
+                <Button 
+                  onClick={async () => {
+                    setSavingSettings(true);
+                    try {
+                      await api.put('/admin/settings', { currency, language, theme });
+                      toast({ title: 'Success', description: 'Settings saved successfully' });
+                    } catch (error: any) {
+                      toast({
+                        title: 'Error',
+                        description: error.response?.data?.message || 'Failed to save settings',
+                        variant: 'destructive',
+                      });
+                    } finally {
+                      setSavingSettings(false);
+                    }
+                  }}
+                  disabled={savingSettings}
+                >
+                  {savingSettings ? 'Saving...' : 'Save Settings'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Changes apply immediately. Use "Save Settings" to persist to backend.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>

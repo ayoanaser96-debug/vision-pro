@@ -11,7 +11,13 @@ export class PrescriptionTemplate {
   @Prop({ required: true, type: String })
   specialty: string;
 
-  @Prop({ type: Array, default: [] })
+  @Prop({ type: [{
+    name: String,
+    dosage: String,
+    frequency: String,
+    duration: String,
+    instructions: { type: String, required: false }
+  }], default: [] })
   medications: Array<{
     name: string;
     dosage: string;
@@ -20,7 +26,17 @@ export class PrescriptionTemplate {
     instructions?: string;
   }>;
 
-  @Prop({ type: Array, default: [] })
+  @Prop({ type: [{
+    type: String,
+    prescription: {
+      sphere: String,
+      cylinder: String,
+      axis: String,
+      add: { type: String, required: false }
+    },
+    frame: { type: String, required: false },
+    lensType: { type: String, required: false }
+  }], default: [], required: false })
   glasses?: Array<{
     type: string;
     prescription: {

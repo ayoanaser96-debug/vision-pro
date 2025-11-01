@@ -147,13 +147,240 @@ export class PrescriptionsService {
   }
 
   async getTemplates(specialty?: string) {
-    const query = specialty ? { specialty } : {};
-    return this.templateModel.find(query).sort({ name: 1 });
+    try {
+      const query = specialty ? { specialty } : {};
+      let templates = await this.templateModel.find(query).sort({ name: 1 });
+      
+      // If no templates exist, create default templates
+      if (templates.length === 0) {
+        try {
+          await this.createDefaultTemplates();
+          templates = await this.templateModel.find(query).sort({ name: 1 });
+        } catch (error) {
+          console.error('Error creating default templates:', error);
+          // Return empty array if default templates fail to create
+          return [];
+        }
+      }
+      
+      return templates;
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      throw error;
+    }
+  }
+
+  private async createDefaultTemplates() {
+    const defaultTemplates = [
+      // Medication Templates
+      {
+        name: 'Dry Eye Treatment',
+        specialty: 'General Ophthalmology',
+        medications: [
+          {
+            name: 'Artificial Tears',
+            dosage: '1-2 drops',
+            frequency: '4 times daily',
+            duration: '4-6 weeks',
+            instructions: 'Apply in each eye as needed for dryness',
+          },
+          {
+            name: 'Cyclosporine Eye Drops',
+            dosage: '1 drop',
+            frequency: 'Twice daily',
+            duration: '3-6 months',
+            instructions: 'Apply before bedtime',
+          },
+        ],
+        notes: 'Treat dry eye syndrome. Monitor for improvement after 2-4 weeks.',
+      },
+      {
+        name: 'Glaucoma Management',
+        specialty: 'Glaucoma',
+        medications: [
+          {
+            name: 'Timolol Eye Drops',
+            dosage: '1 drop',
+            frequency: 'Twice daily',
+            duration: 'Ongoing',
+            instructions: 'Apply to affected eye(s). Monitor IOP regularly.',
+          },
+        ],
+        notes: 'Regular IOP monitoring required. Follow-up in 3 months.',
+      },
+      {
+        name: 'Eye Infection Treatment',
+        specialty: 'General Ophthalmology',
+        medications: [
+          {
+            name: 'Chloramphenicol Eye Drops',
+            dosage: '1-2 drops',
+            frequency: '4 times daily',
+            duration: '7-10 days',
+            instructions: 'Apply to infected eye. Wash hands before application.',
+          },
+          {
+            name: 'Chloramphenicol Eye Ointment',
+            dosage: 'Small amount',
+            frequency: 'At bedtime',
+            duration: '7-10 days',
+            instructions: 'Apply before sleep for better coverage.',
+          },
+        ],
+        notes: 'Complete full course even if symptoms improve. Avoid contact lenses during treatment.',
+      },
+      {
+        name: 'Allergic Conjunctivitis',
+        specialty: 'General Ophthalmology',
+        medications: [
+          {
+            name: 'Antihistamine Eye Drops',
+            dosage: '1-2 drops',
+            frequency: 'Twice daily',
+            duration: '2-4 weeks',
+            instructions: 'Apply as needed for allergy symptoms',
+          },
+          {
+            name: 'Artificial Tears',
+            dosage: '1-2 drops',
+            frequency: 'As needed',
+            duration: 'As needed',
+            instructions: 'Use to flush allergens',
+          },
+        ],
+        notes: 'Avoid allergens. Cool compress may help reduce irritation.',
+      },
+      // Glasses Templates
+      {
+        name: 'Single Vision Glasses',
+        specialty: 'Refractive Error',
+        glasses: [
+          {
+            type: 'glasses',
+            prescription: {
+              sphere: '-2.00',
+              cylinder: '0.00',
+              axis: '0',
+            },
+            lensType: 'Single Vision',
+            frame: 'Standard Frame',
+          },
+        ],
+        notes: 'Standard single vision correction. Update prescription annually.',
+      },
+      {
+        name: 'Progressive Lenses',
+        specialty: 'Presbyopia',
+        glasses: [
+          {
+            type: 'glasses',
+            prescription: {
+              sphere: '0.00',
+              cylinder: '0.00',
+              axis: '0',
+              add: '+2.50',
+            },
+            lensType: 'Progressive',
+            frame: 'Full Frame Recommended',
+          },
+        ],
+        notes: 'Progressive lenses for presbyopia. Allow 1-2 weeks adaptation period.',
+      },
+      {
+        name: 'Bifocal Glasses',
+        specialty: 'Presbyopia',
+        glasses: [
+          {
+            type: 'glasses',
+            prescription: {
+              sphere: '0.00',
+              cylinder: '0.00',
+              axis: '0',
+              add: '+2.50',
+            },
+            lensType: 'Bifocal',
+            frame: 'Standard Frame',
+          },
+        ],
+        notes: 'Bifocal correction for near and distance vision.',
+      },
+      {
+        name: 'Astigmatism Correction',
+        specialty: 'Refractive Error',
+        glasses: [
+          {
+            type: 'glasses',
+            prescription: {
+              sphere: '-2.00',
+              cylinder: '-1.50',
+              axis: '90',
+            },
+            lensType: 'Single Vision',
+            frame: 'Standard Frame',
+          },
+        ],
+        notes: 'Astigmatism correction. Ensure proper axis alignment.',
+      },
+      {
+        name: 'Contact Lenses - Daily',
+        specialty: 'Refractive Error',
+        glasses: [
+          {
+            type: 'contact_lenses',
+            prescription: {
+              sphere: '-2.00',
+              cylinder: '0.00',
+              axis: '0',
+            },
+            lensType: 'Daily Disposable',
+          },
+        ],
+        notes: 'Daily disposable contact lenses. Replace daily. Follow hygiene guidelines.',
+      },
+      {
+        name: 'Contact Lenses - Monthly',
+        specialty: 'Refractive Error',
+        glasses: [
+          {
+            type: 'contact_lenses',
+            prescription: {
+              sphere: '-2.00',
+              cylinder: '-0.75',
+              axis: '180',
+            },
+            lensType: 'Monthly',
+          },
+        ],
+        notes: 'Monthly contact lenses. Clean daily. Replace monthly or as recommended.',
+      },
+    ];
+
+    try {
+      for (const template of defaultTemplates) {
+        try {
+          const existing = await this.templateModel.findOne({ name: template.name });
+          if (!existing) {
+            await this.templateModel.create(template);
+          }
+        } catch (error) {
+          console.error(`Error creating template "${template.name}":`, error);
+          // Continue with next template if one fails
+        }
+      }
+    } catch (error) {
+      console.error('Error in createDefaultTemplates:', error);
+      throw error;
+    }
   }
 
   async createTemplate(templateData: any) {
-    const template = new this.templateModel(templateData);
-    return template.save();
+    try {
+      const template = new this.templateModel(templateData);
+      return await template.save();
+    } catch (error) {
+      console.error('Error creating template:', error);
+      throw error;
+    }
   }
 
   async getTemplateById(id: string) {

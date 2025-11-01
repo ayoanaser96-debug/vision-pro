@@ -31,20 +31,35 @@ export class AppointmentsService {
         throw new BadRequestException('Patient ID is required');
       }
 
-      // Ensure doctorId is set
-      if (!createDto.doctorId) {
-        throw new BadRequestException('Doctor ID is required');
+      // Ensure doctorId is set (optional but validate if provided)
+      if (createDto.doctorId) {
+        // Validate doctorId is a valid ObjectId format
+        if (typeof createDto.doctorId !== 'string' || createDto.doctorId.length !== 24) {
+          throw new BadRequestException('Invalid doctor ID format');
+        }
       }
 
-      const appointment = new this.appointmentModel(createDto);
-      return appointment.save();
+      // Remove any fields that are not in the schema (like 'urgency')
+      const { urgency, ...validData } = createDto;
+
+      // Ensure status is valid (default to 'pending' if invalid)
+      const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+      if (validData.status && !validStatuses.includes(validData.status)) {
+        validData.status = 'pending';
+      }
+
+      const appointment = new this.appointmentModel(validData);
+      return await appointment.save();
     } catch (error: any) {
       // If it's already a NestJS exception, re-throw it
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
         throw error;
       }
-      // Otherwise, wrap it in a BadRequestException
-      throw new BadRequestException(error.message || 'Failed to create appointment');
+      // Log the full error for debugging
+      console.error('Error creating appointment:', error);
+      // Return a more helpful error message
+      const errorMessage = error.message || 'Failed to create appointment';
+      throw new BadRequestException(errorMessage);
     }
   }
 

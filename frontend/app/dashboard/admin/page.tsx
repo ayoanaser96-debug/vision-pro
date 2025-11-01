@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-provider';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,6 +55,7 @@ import {
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
+  const { theme, language, currency, setTheme, setLanguage, setCurrency } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
@@ -67,6 +69,7 @@ export default function AdminDashboard() {
   const [securityStatus, setSecurityStatus] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     if (!loading && user?.role !== 'admin') {
@@ -147,6 +150,137 @@ export default function AdminDashboard() {
       });
     }
   };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      toast({ title: 'Success', description: 'User deleted successfully' });
+      loadAllData();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to delete user',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      await api.put('/admin/settings', {
+        currency,
+        language,
+        theme,
+      });
+      toast({
+        title: 'Success',
+        description: 'Settings saved successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to save settings',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'auto') => {
+    setTheme(newTheme);
+    // Save immediately
+    api.put('/admin/settings', {
+      currency,
+      language,
+      theme: newTheme,
+    }).catch(() => {
+      // Silently fail
+    });
+  };
+
+  const handleLanguageChange = (newLanguage: 'en' | 'ar') => {
+    setLanguage(newLanguage);
+    // Save immediately
+    api.put('/admin/settings', {
+      currency,
+      language: newLanguage,
+      theme,
+    }).catch(() => {
+      // Silently fail
+    });
+  };
+
+  const handleCurrencyChange = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    // Save immediately
+    api.put('/admin/settings', {
+      currency: newCurrency,
+      language,
+      theme,
+    }).catch(() => {
+      // Silently fail
+    });
+  };
+
+  const handleDeviceCalibrate = async (deviceId: string) => {
+    try {
+      await api.post(`/admin/devices/${deviceId}/calibrate`);
+      toast({
+        title: 'Success',
+        description: 'Calibration started for device',
+      });
+      loadAllData();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to start calibration',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewDeviceLogs = (deviceId: string) => {
+    toast({
+      title: 'Device Logs',
+      description: `Viewing logs for device ${deviceId}. Logs will be displayed here.`,
+    });
+    // In production, this would open a modal or navigate to logs page
+  };
+
+  const handleExportLogs = async () => {
+    try {
+      const res = await api.get('/admin/security/audit-logs', {
+        responseType: 'blob',
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `audit-logs-${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast({
+        title: 'Success',
+        description: 'Audit logs exported successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to export logs',
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -445,7 +579,11 @@ export default function AdminDashboard() {
                             >
                               Revoke Access
                             </Button>
-                            <Button variant="destructive" size="sm">
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDeleteUser(u._id)}
+                            >
                               Delete
                             </Button>
                           </div>
@@ -510,10 +648,19 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeviceCalibrate(device.deviceId)}
+                              disabled={device.status === 'offline'}
+                            >
                               Calibrate
                             </Button>
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleViewDeviceLogs(device.deviceId)}
+                            >
                               View Logs
                             </Button>
                           </div>
@@ -830,7 +977,11 @@ export default function AdminDashboard() {
                   <p className="text-muted-foreground text-sm">
                     Audit logging is active. View detailed logs in the audit service.
                   </p>
-                  <Button className="mt-4" variant="outline">
+                  <Button 
+                    className="mt-4" 
+                    variant="outline"
+                    onClick={handleExportLogs}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Export Logs
                   </Button>
@@ -849,7 +1000,11 @@ export default function AdminDashboard() {
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm font-medium">Currency</label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2">
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
+                    value={currency}
+                    onChange={(e) => handleCurrencyChange(e.target.value)}
+                  >
                     <option value="USD">USD ($)</option>
                     <option value="IQD">IQD (ع.د)</option>
                     <option value="EUR">EUR (€)</option>
@@ -857,20 +1012,36 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Language</label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2">
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
+                    value={language}
+                    onChange={(e) => handleLanguageChange(e.target.value as 'en' | 'ar')}
+                  >
                     <option value="en">English</option>
                     <option value="ar">Arabic (العربية)</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Theme</label>
-                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2">
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
+                    value={theme}
+                    onChange={(e) => handleThemeChange(e.target.value as 'light' | 'dark' | 'auto')}
+                  >
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                     <option value="auto">Auto</option>
                   </select>
                 </div>
-                <Button>Save Settings</Button>
+                <Button 
+                  onClick={handleSaveSettings}
+                  disabled={savingSettings}
+                >
+                  {savingSettings ? 'Saving...' : 'Save Settings'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Changes apply immediately. Use "Save Settings" to persist to backend.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>

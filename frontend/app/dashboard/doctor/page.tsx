@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-provider';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { SmartCaseManagement } from '@/components/smart-case-management';
 import { ImageViewer } from '@/components/image-viewer';
 import { SmartPrescription } from '@/components/smart-prescription';
@@ -35,8 +37,10 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 
 export default function DoctorDashboard() {
   const { user, loading } = useAuth();
+  const { theme, language, setTheme, setLanguage } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
+  const [savingSettings, setSavingSettings] = useState(false);
   const [activeTab, setActiveTab] = useState('cases');
   const [cases, setCases] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -321,11 +325,12 @@ export default function DoctorDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="cases">Case Management</TabsTrigger>
             <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="cases-view">Case Details</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           {/* Case Management Tab */}
@@ -407,7 +412,7 @@ export default function DoctorDashboard() {
                         <p className="text-sm text-muted-foreground mb-1">Prescriptions</p>
                         <p className="text-2xl font-bold">{analytics.prescriptions || 0}</p>
                       </div>
-                      <div className="p-4 bg-purple-50 rounded-lg">
+                      <div className="p-4 bg-accent/10 dark:bg-accent/20 rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">Avg Response Time</p>
                         <p className="text-2xl font-bold">
                           {analytics.avgResponseTime ? `${analytics.avgResponseTime.toFixed(1)} min` : 'N/A'}
@@ -476,18 +481,18 @@ export default function DoctorDashboard() {
                   <CardDescription>Comparison of AI recommendations vs your diagnoses</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg">
+                  <div className="p-4 bg-gradient-to-br from-accent/10 to-primary/10 dark:from-accent/20 dark:to-primary/20 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-muted-foreground mb-1">AI Agreement Rate</p>
-                        <p className="text-3xl font-bold text-purple-600">
+                        <p className="text-3xl font-bold text-accent">
                           {analytics?.aiAgreementRate ? `${analytics.aiAgreementRate.toFixed(1)}%` : 'N/A'}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
                           Your diagnoses align with AI recommendations
                         </p>
                       </div>
-                      <Brain className="h-16 w-16 text-purple-200" />
+                      <Brain className="h-16 w-16 text-accent/30" />
                     </div>
                   </div>
                 </CardContent>
@@ -524,10 +529,10 @@ export default function DoctorDashboard() {
                             <Brain className="h-4 w-4 text-primary" />
                             AI Insights
                           </h3>
-                          <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 space-y-2">
+                          <div className="p-4 bg-accent/10 dark:bg-accent/20 rounded-lg border border-accent/30 space-y-2">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium">Urgency Score:</span>
-                              <Badge className="bg-purple-600">{selectedCase.aiInsights.urgency}%</Badge>
+                              <Badge className="bg-accent text-accent-foreground">{selectedCase.aiInsights.urgency}%</Badge>
                             </div>
                             {selectedCase.aiInsights.riskFactors.length > 0 && (
                               <div>
@@ -654,6 +659,64 @@ export default function DoctorDashboard() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Doctor Settings</CardTitle>
+                <CardDescription>Configure preferences</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Language</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value as 'en' | 'ar')}
+                  >
+                    <option value="en">English</option>
+                    <option value="ar">Arabic (العربية)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Theme</Label>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                    value={theme}
+                    onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'auto')}
+                  >
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="auto">Auto</option>
+                  </select>
+                </div>
+                <Button 
+                  onClick={async () => {
+                    setSavingSettings(true);
+                    try {
+                      await api.put('/admin/settings', { language, theme });
+                      toast({ title: 'Success', description: 'Settings saved successfully' });
+                    } catch (error: any) {
+                      toast({
+                        title: 'Error',
+                        description: error.response?.data?.message || 'Failed to save settings',
+                        variant: 'destructive',
+                      });
+                    } finally {
+                      setSavingSettings(false);
+                    }
+                  }}
+                  disabled={savingSettings}
+                >
+                  {savingSettings ? 'Saving...' : 'Save Settings'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Changes apply immediately. Use "Save Settings" to persist to backend.
+                </p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

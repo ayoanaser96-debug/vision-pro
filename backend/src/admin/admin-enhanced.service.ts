@@ -6,6 +6,7 @@ import { EyeTest, EyeTestDocument } from '../eye-tests/schemas/eye-test.schema';
 import { Appointment, AppointmentDocument } from '../appointments/schemas/appointment.schema';
 import { Prescription, PrescriptionDocument } from '../prescriptions/schemas/prescription.schema';
 import { Case, CaseDocument } from '../cases/schemas/case.schema';
+import { SystemSettings, SystemSettingsDocument } from './schemas/system-settings.schema';
 
 // Device Monitoring Schema (inline for now)
 export interface DeviceStatus {
@@ -51,6 +52,7 @@ export class AdminEnhancedService {
     @InjectModel(Appointment.name) private appointmentModel: Model<AppointmentDocument>,
     @InjectModel(Prescription.name) private prescriptionModel: Model<PrescriptionDocument>,
     @InjectModel(Case.name) private caseModel: Model<CaseDocument>,
+    @InjectModel(SystemSettings.name) private settingsModel: Model<SystemSettingsDocument>,
   ) {}
 
   // 1. Smart User & Role Management
@@ -398,6 +400,51 @@ export class AdminEnhancedService {
       lastBackup: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
       backupFrequency: 'daily',
     };
+  }
+
+  // System Settings
+  async getSettings() {
+    let settings = await this.settingsModel.findOne({ settingsKey: 'global' });
+    if (!settings) {
+      // Create default settings
+      settings = new this.settingsModel({
+        settingsKey: 'global',
+        currency: 'USD',
+        language: 'en',
+        theme: 'light',
+      });
+      await settings.save();
+    }
+    return settings;
+  }
+
+  async updateSettings(settingsData: any) {
+    const settings = await this.settingsModel.findOneAndUpdate(
+      { settingsKey: 'global' },
+      {
+        currency: settingsData.currency,
+        language: settingsData.language,
+        theme: settingsData.theme,
+        otherSettings: settingsData.otherSettings,
+      },
+      { upsert: true, new: true },
+    );
+    return settings;
+  }
+
+  // Device Management
+  async calibrateDevice(deviceId: string) {
+    // Update device calibration status
+    const device = this.devices.find(d => d.deviceId === deviceId);
+    if (device) {
+      device.calibrationStatus = 'calibrating';
+      // Simulate calibration process
+      setTimeout(() => {
+        device.calibrationStatus = 'calibrated';
+      }, 5000);
+      return { message: 'Calibration started', deviceId };
+    }
+    throw new Error('Device not found');
   }
 }
 

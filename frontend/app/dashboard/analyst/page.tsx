@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from '@/lib/theme-provider';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,8 +16,10 @@ import { useToast } from '@/components/ui/use-toast';
 
 export default function AnalystDashboard() {
   const { user, loading } = useAuth();
+  const { theme, language, setTheme, setLanguage } = useTheme();
   const router = useRouter();
   const { toast } = useToast();
+  const [savingSettings, setSavingSettings] = useState(false);
   const [pendingTests, setPendingTests] = useState([]);
   const [selectedTest, setSelectedTest] = useState<any>(null);
   const [notes, setNotes] = useState('');
@@ -260,7 +263,7 @@ export default function AnalystDashboard() {
                               {test.status}
                             </span>
                             {test.aiAnalysis && (
-                              <span className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800 flex items-center gap-1">
+                              <span className="text-xs px-2 py-1 rounded bg-accent/10 dark:bg-accent/20 text-accent dark:text-accent-foreground flex items-center gap-1">
                                 <Brain className="h-3 w-3" />
                                 AI Analyzed
                               </span>
@@ -398,7 +401,7 @@ export default function AnalystDashboard() {
                     <Brain className="h-4 w-4 text-primary" />
                     AI Analysis Results
                   </h3>
-                  <div className="space-y-3 p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                  <div className="space-y-3 p-4 bg-gradient-to-br from-accent/10 to-primary/10 dark:from-accent/20 dark:to-primary/20 rounded-lg border border-accent/30">
                     <div className="grid grid-cols-3 gap-4">
                       <div className="p-3 bg-white rounded">
                         <p className="text-xs text-muted-foreground mb-1">Cataract</p>
@@ -476,6 +479,62 @@ export default function AnalystDashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Settings Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Analyst Settings</CardTitle>
+            <CardDescription>Configure preferences</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Language</Label>
+              <select 
+                className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as 'en' | 'ar')}
+              >
+                <option value="en">English</option>
+                <option value="ar">Arabic (العربية)</option>
+              </select>
+            </div>
+            <div>
+              <Label>Theme</Label>
+              <select 
+                className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm mt-2"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'auto')}
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="auto">Auto</option>
+              </select>
+            </div>
+            <Button 
+              onClick={async () => {
+                setSavingSettings(true);
+                try {
+                  await api.put('/admin/settings', { language, theme });
+                  toast({ title: 'Success', description: 'Settings saved successfully' });
+                } catch (error: any) {
+                  toast({
+                    title: 'Error',
+                    description: error.response?.data?.message || 'Failed to save settings',
+                    variant: 'destructive',
+                  });
+                } finally {
+                  setSavingSettings(false);
+                }
+              }}
+              disabled={savingSettings}
+            >
+              {savingSettings ? 'Saving...' : 'Save Settings'}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Changes apply immediately. Use "Save Settings" to persist to backend.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
