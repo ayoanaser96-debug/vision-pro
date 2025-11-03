@@ -277,7 +277,7 @@ export default function PharmacyDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{analytics?.totalPrescriptions || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm font-bold text-foreground mt-1">
                 {analytics?.pending || 0} pending
               </p>
             </CardContent>
@@ -292,7 +292,7 @@ export default function PharmacyDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{analytics?.totalInventoryItems || 0}</div>
-              <p className="text-xs text-red-600 font-semibold">
+              <p className="text-sm font-bold text-red-600">
                 {analytics?.lowStockItems || 0} low stock
               </p>
             </CardContent>
@@ -309,7 +309,7 @@ export default function PharmacyDashboard() {
               <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 ${analytics?.revenue?.toLocaleString() || '0'}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">This period</p>
+              <p className="text-sm font-bold text-foreground mt-1">This period</p>
             </CardContent>
           </Card>
 
@@ -322,7 +322,7 @@ export default function PharmacyDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{expiringSoon.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Next 30 days</p>
+              <p className="text-sm font-bold text-foreground mt-1">Next 30 days</p>
             </CardContent>
           </Card>
         </div>
@@ -362,7 +362,7 @@ export default function PharmacyDashboard() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold text-foreground"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>

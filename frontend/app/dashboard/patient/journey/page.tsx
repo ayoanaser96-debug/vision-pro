@@ -397,12 +397,12 @@ export default function PatientJourneyPage() {
                               <div>
                                 <h3 className={`font-semibold text-lg ${
                                   isCompleted || isInProgress 
-                                    ? 'text-[hsl(178.6,84.3%,10%)] dark:text-foreground' 
+                                    ? 'text-foreground' 
                                     : ''
                                 }`}>{step.title}</h3>
                                 <p className={`text-sm ${
                                   isCompleted || isInProgress 
-                                    ? 'text-[hsl(178.6,84.3%,10%)]/70 dark:text-muted-foreground' 
+                                    ? 'text-muted-foreground' 
                                     : 'text-muted-foreground'
                                 }`}>{step.description}</p>
                                 {cost > 0 && (
@@ -413,7 +413,7 @@ export default function PatientJourneyPage() {
                                 {stepData?.completedAt && (
                                   <p className={`text-xs mt-1 ${
                                     isCompleted || isInProgress 
-                                      ? 'text-[hsl(178.6,84.3%,10%)]/60 dark:text-muted-foreground' 
+                                      ? 'text-muted-foreground' 
                                       : 'text-muted-foreground'
                                   }`}>
                                     ✓ Completed at {new Date(stepData.completedAt).toLocaleTimeString()}
@@ -422,7 +422,7 @@ export default function PatientJourneyPage() {
                                 {stepData?.notes && (
                                   <p className={`text-sm mt-1 italic ${
                                     isCompleted || isInProgress 
-                                      ? 'text-[hsl(178.6,84.3%,10%)]/80 dark:text-muted-foreground' 
+                                      ? 'text-muted-foreground' 
                                       : 'text-muted-foreground'
                                   }`}>
                                     {stepData.notes}
@@ -443,12 +443,12 @@ export default function PatientJourneyPage() {
                   <div className="mt-6 space-y-4">
                     <div className="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        <CheckCircle2 className="h-6 w-6 text-green-600" />
                         <div>
-                          <p className="font-semibold text-[hsl(178.6,84.3%,10%)] dark:text-green-200">
+                          <p className="font-semibold text-green-600">
                             Journey Completed!
                           </p>
-                          <p className="text-sm text-[hsl(178.6,84.3%,10%)]/70 dark:text-green-300">
+                          <p className="text-sm text-green-600">
                             {journey.checkOutTime 
                               ? `Checked out at ${new Date(journey.checkOutTime).toLocaleTimeString()}`
                               : 'All steps completed successfully'
@@ -558,14 +558,14 @@ Thank you for visiting Vision Smart Clinic!
                 {journey.currentStep && journey.overallStatus !== 'completed' && (
                   <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Bell className="h-6 w-6 text-blue-600 dark:text-blue-400 animate-pulse" />
+                      <Bell className="h-6 w-6 text-blue-600 animate-pulse" />
                       <div>
-                        <p className="font-semibold text-[hsl(178.6,84.3%,10%)] dark:text-blue-200">
+                        <p className="font-semibold text-blue-600">
                           Next Step: {
                             stepConfig.find(s => s.key === journey.currentStep)?.title || 'Unknown'
                           }
                         </p>
-                        <p className="text-sm text-[hsl(178.6,84.3%,10%)]/70 dark:text-blue-300">
+                        <p className="text-sm text-blue-600">
                           Please proceed to the {stepConfig.find(s => s.key === journey.currentStep)?.title.toLowerCase() || 'next'} station
                         </p>
                       </div>

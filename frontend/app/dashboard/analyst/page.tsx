@@ -145,7 +145,7 @@ export default function AnalystDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{pendingTests.length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Awaiting analysis</p>
+              <p className="text-sm font-bold text-foreground mt-1">Awaiting analysis</p>
             </CardContent>
           </Card>
 
@@ -160,7 +160,7 @@ export default function AnalystDashboard() {
               <div className="text-3xl font-bold">
                 {pendingTests.filter((t: any) => t.status === 'analyzed').length}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Completed</p>
+              <p className="text-sm font-bold text-foreground mt-1">Completed</p>
             </CardContent>
           </Card>
 
@@ -173,7 +173,7 @@ export default function AnalystDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{pendingTests.filter((t: any) => t.aiAnalysis).length}</div>
-              <p className="text-xs text-muted-foreground mt-1">AI processed</p>
+              <p className="text-sm font-bold text-foreground mt-1">AI processed</p>
             </CardContent>
           </Card>
 
@@ -186,7 +186,7 @@ export default function AnalystDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{pendingTests.filter((t: any) => t.status === 'doctor_review').length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Sent for review</p>
+              <p className="text-sm font-bold text-foreground mt-1">Sent for review</p>
             </CardContent>
           </Card>
         </div>
@@ -271,7 +271,7 @@ export default function AnalystDashboard() {
                               {test.status}
                             </span>
                             {test.aiAnalysis && (
-                              <span className="text-xs px-2 py-1 rounded bg-accent/10 dark:bg-accent/20 text-accent dark:text-accent-foreground flex items-center gap-1">
+                              <span className="text-xs px-2 py-1 rounded bg-accent/10 text-accent flex items-center gap-1">
                                 <Brain className="h-3 w-3" />
                                 AI Analyzed
                               </span>
