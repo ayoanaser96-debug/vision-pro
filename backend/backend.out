@@ -1,0 +1,705 @@
+
+> vision-clinic-backend@1.0.0 start:dev
+> nest start --watch
+
+[2J[3J[H[[90m15:57:21[0m] Starting compilation in watch mode...
+
+[[90m15:57:47[0m] Found 0 errors. Watching for file changes.
+
+(node:8683) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [NestFactory] Starting Nest application...
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +315ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] PassportModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] ConfigHostModule dependencies initialized +4ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] AppModule dependencies initialized +5ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] ConfigModule dependencies initialized +4ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] ConfigModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] AnalystsModule dependencies initialized +4ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] BillingModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] JwtModule dependencies initialized +3ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] JwtModule dependencies initialized +2ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseCoreModule dependencies initialized +46ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +52ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +2ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:49     LOG [InstanceLoader] AuditModule dependencies initialized +6ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] UsersModule dependencies initialized +574ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] NotificationsModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] AppointmentsModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] AnalyticsModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] EyeTestsModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] PrescriptionsModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] PharmacyModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] AuthModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] PatientsModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] CasesModule dependencies initialized +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] AdminModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] ChatModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] FaceRecognitionModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [InstanceLoader] DoctorsModule dependencies initialized +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [WebSocketsController] ChatGateway subscribed to the "send_message" message +37ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [WebSocketsController] ChatGateway subscribed to the "join_conversation" message +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] AppController {/}: +5ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/, GET} route +4ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/health, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] AuthController {/auth}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/auth/register, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/auth/login, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/auth/profile, GET} route +3ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/auth/refresh, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] BiometricController {/biometric}: +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/face/register, POST} route +3ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/face/recognize, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/face/my-face, GET} route +4ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/face/check-in, POST} route +3ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/document/scan, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/document/my-documents, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/document/:type, GET} route +3ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/biometric/document/:id/verify, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] UsersController {/users}: +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/users/me, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/users/:id, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] PatientsController {/patients}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/profile, GET} route +3ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/profile, PUT} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/medical-history, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/unified-journey, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/suggested-appointments, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/appointments/:id/wait-time, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/health-timeline, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/comparative-analysis, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/ai-insights, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/prescription-tracking, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/billing-history, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/health-dashboard, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/final-results, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/journey/check-in, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/journey, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/journey/active, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/journey/:step/complete, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/patients/journey/receipt, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] NotificationsController {/notifications}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/notifications, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/notifications/unread-count, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/notifications/:id/read, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/notifications/mark-all-read, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/notifications/:id, DELETE} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] AppointmentsController {/appointments}: +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/appointments, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/appointments/my-appointments, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/appointments/upcoming, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/appointments/:id, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/appointments/:id, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/appointments/:id/cancel, PUT} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] EyeTestsController {/eye-tests}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests, POST} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests/my-tests, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests/pending-analysis, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests/for-doctor, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests/:id, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests/:id/analyze, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests/:id/analyst-notes, PUT} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/eye-tests/:id/doctor-review, PUT} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] AnalystsController {/analysts}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/analysts/pending-tests, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/analysts/tests/:id/analyze, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/analysts/tests/:id/notes, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] DoctorsController {/doctors}: +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/doctors/assigned-patients, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/doctors/cases, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/doctors/appointments, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/doctors/tests/:id/review, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/doctors/prescriptions, POST} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] PrescriptionsController {/prescriptions}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/my-prescriptions, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/:id, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/:id/assign-pharmacy, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/:id/fill, PUT} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/ai-suggestions, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/templates, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/templates, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/templates/:id, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/prescriptions/:id/sign, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] AdminController {/admin}: +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users/activity, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users/:id/activity, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users/:id, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users/:id, PUT} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users/:id/role, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users/:id/revoke-access, POST} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/users/:id, DELETE} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/analytics, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/devices, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/devices/:deviceId, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/devices/alerts, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/appointments/analytics, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/billing/analytics, GET} route +3ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/analytics/comprehensive, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/security/audit-logs, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/security/status, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/settings, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/settings, PUT} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/admin/devices/:deviceId/calibrate, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] PharmacyController {/pharmacy}: +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/qr, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/validate, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/status, PUT} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/fill, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/ai-suggestions, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/stock-forecast, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/inventory, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/inventory/low-stock, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/inventory/expiring-soon, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/inventory, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/inventory/:id, PUT} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/suppliers, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/suppliers, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/suppliers/:id/rating, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/delivery, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/delivery-status, PUT} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/analytics, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/pharmacy/analytics/drug-demand, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] ChatController {/chat}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/chat/conversation, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/chat/message, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/chat/contacts, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/chat/message/:id/read, PUT} route +3ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] CasesController {/cases}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/cases, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/cases/my-cases, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/cases/:id, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/cases/:id/status, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/cases/:id/delegate, PUT} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/cases/:id/assign, PUT} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/cases/:id/timeline, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] AnalyticsController {/analytics}: +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/analytics/doctor-performance, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/analytics/doctor-performance/:doctorId, GET} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/analytics/clinic-insights, GET} route +2ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/analytics/test-trends, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] BillingController {/billing}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/billing/payment, POST} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RoutesResolver] FaceRecognitionController {/face-recognition}: +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/face-recognition/register/:patientId, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/face-recognition/recognize, POST} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/face-recognition/registered, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/face-recognition/remove/:patientId, DELETE} route +1ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/face-recognition/check-dependencies, GET} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/face-recognition/register-base64/:patientId, POST} route +0ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [RouterExplorer] Mapped {/face-recognition/recognize-base64, POST} route +4ms
+[Nest] 8807  - 08/11/2025, 15:57:50     LOG [NestApplication] Nest application successfully started +25ms
+[Nest] 8807  - 08/11/2025, 15:57:50   ERROR [NestApplication] Error: listen EADDRINUSE: address already in use :::3001 +5ms
+❌ Server startup error: Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at ExpressAdapter.listen (/home/ayoa/Documents/vision pro/backend/node_modules/@nestjs/platform-express/adapters/express-adapter.js:95:32)
+    at /home/ayoa/Documents/vision pro/backend/node_modules/@nestjs/core/nest-application.js:183:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (/home/ayoa/Documents/vision pro/backend/node_modules/@nestjs/core/nest-application.js:173:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async bootstrap (/home/ayoa/Documents/vision pro/backend/src/main.ts:29:5) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+Error details: listen EADDRINUSE: address already in use :::3001
+Stack: Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at ExpressAdapter.listen (/home/ayoa/Documents/vision pro/backend/node_modules/@nestjs/platform-express/adapters/express-adapter.js:95:32)
+    at /home/ayoa/Documents/vision pro/backend/node_modules/@nestjs/core/nest-application.js:183:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (/home/ayoa/Documents/vision pro/backend/node_modules/@nestjs/core/nest-application.js:173:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async bootstrap (/home/ayoa/Documents/vision pro/backend/src/main.ts:29:5)
+[2J[3J[H[[90m16:10:00[0m] File change detected. Starting incremental compilation...
+
+[[90m16:10:07[0m] Found 0 errors. Watching for file changes.
+
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [NestFactory] Starting Nest application...
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +215ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] PassportModule dependencies initialized +2ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] ConfigHostModule dependencies initialized +3ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] AppModule dependencies initialized +2ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] ConfigModule dependencies initialized +2ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] ConfigModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] AnalystsModule dependencies initialized +3ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] BillingModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] JwtModule dependencies initialized +2ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] JwtModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseCoreModule dependencies initialized +55ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +77ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +2ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:12     LOG [InstanceLoader] AuditModule dependencies initialized +9ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] UsersModule dependencies initialized +904ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] NotificationsModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] AppointmentsModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] AnalyticsModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] EyeTestsModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] PrescriptionsModule dependencies initialized +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] PharmacyModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] AuthModule dependencies initialized +8ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] PatientsModule dependencies initialized +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] CasesModule dependencies initialized +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] AdminModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] ChatModule dependencies initialized +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] FaceRecognitionModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [InstanceLoader] DoctorsModule dependencies initialized +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [WebSocketsController] ChatGateway subscribed to the "send_message" message +38ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [WebSocketsController] ChatGateway subscribed to the "join_conversation" message +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] AppController {/}: +5ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/, GET} route +5ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/health, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] AuthController {/auth}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/auth/register, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/auth/login, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/auth/profile, GET} route +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/auth/refresh, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] BiometricController {/biometric}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/face/register, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/face/recognize, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/face/my-face, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/face/check-in, POST} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/document/scan, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/document/my-documents, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/document/:type, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/biometric/document/:id/verify, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] UsersController {/users}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/users/me, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/users/:id, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] PatientsController {/patients}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/profile, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/profile, PUT} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/medical-history, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/unified-journey, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/suggested-appointments, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/appointments/:id/wait-time, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/health-timeline, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/comparative-analysis, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/ai-insights, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/prescription-tracking, GET} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/billing-history, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/health-dashboard, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/final-results, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/journey/check-in, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/journey, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/journey/active, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/journey/:step/complete, POST} route +5ms
+[2J[3J[H[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/patients/journey/receipt, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] NotificationsController {/notifications}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/notifications, GET} route +2ms
+[[90m16:10:13[0m] File change detected. Starting incremental compilation...
+
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/notifications/unread-count, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/notifications/:id/read, PUT} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/notifications/mark-all-read, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/notifications/:id, DELETE} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] AppointmentsController {/appointments}: +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/appointments, POST} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/appointments/my-appointments, GET} route +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/appointments/upcoming, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/appointments/:id, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/appointments/:id, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/appointments/:id/cancel, PUT} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] EyeTestsController {/eye-tests}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests/my-tests, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests/pending-analysis, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests/for-doctor, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests/:id, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests/:id/analyze, POST} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests/:id/analyst-notes, PUT} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/eye-tests/:id/doctor-review, PUT} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] AnalystsController {/analysts}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/analysts/pending-tests, GET} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/analysts/tests/:id/analyze, POST} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/analysts/tests/:id/notes, PUT} route +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] DoctorsController {/doctors}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/doctors/assigned-patients, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/doctors/cases, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/doctors/appointments, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/doctors/tests/:id/review, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/doctors/prescriptions, POST} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] PrescriptionsController {/prescriptions}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/my-prescriptions, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/:id, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/:id/assign-pharmacy, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/:id/fill, PUT} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/ai-suggestions, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/templates, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/templates, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/templates/:id, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/prescriptions/:id/sign, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] AdminController {/admin}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users, GET} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users/activity, GET} route +5ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users/:id/activity, GET} route +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users/:id, GET} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users/:id, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users/:id/role, PUT} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users/:id/revoke-access, POST} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/users/:id, DELETE} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/analytics, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/devices, GET} route +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/devices/:deviceId, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/devices/alerts, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/appointments/analytics, GET} route +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/billing/analytics, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/analytics/comprehensive, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/security/audit-logs, GET} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/security/status, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/settings, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/settings, PUT} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/admin/devices/:deviceId/calibrate, POST} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] PharmacyController {/pharmacy}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/qr, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/validate, POST} route +4ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/status, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/fill, PUT} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/ai-suggestions, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/stock-forecast, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/inventory, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/inventory/low-stock, GET} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/inventory/expiring-soon, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/inventory, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/inventory/:id, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/suppliers, GET} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/suppliers, POST} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/suppliers/:id/rating, PUT} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/delivery, POST} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/delivery-status, PUT} route +5ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/analytics, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/pharmacy/analytics/drug-demand, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] ChatController {/chat}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/chat/conversation, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/chat/message, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/chat/contacts, GET} route +5ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/chat/message/:id/read, PUT} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] CasesController {/cases}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/cases, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/cases/my-cases, GET} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/cases/:id, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/cases/:id/status, PUT} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/cases/:id/delegate, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/cases/:id/assign, PUT} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/cases/:id/timeline, POST} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] AnalyticsController {/analytics}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/analytics/doctor-performance, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/analytics/doctor-performance/:doctorId, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/analytics/clinic-insights, GET} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/analytics/test-trends, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] BillingController {/billing}: +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/billing/payment, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RoutesResolver] FaceRecognitionController {/face-recognition}: +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/face-recognition/register/:patientId, POST} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/face-recognition/recognize, POST} route +2ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/face-recognition/registered, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/face-recognition/remove/:patientId, DELETE} route +3ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/face-recognition/check-dependencies, GET} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/face-recognition/register-base64/:patientId, POST} route +0ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [RouterExplorer] Mapped {/face-recognition/recognize-base64, POST} route +1ms
+[Nest] 11711  - 08/11/2025, 16:10:13     LOG [NestApplication] Nest application successfully started +35ms
+✅ Application is running on: http://localhost:3001
+📊 Health check: http://localhost:3001/health
+🌐 CORS enabled for: http://localhost:3000
+💾 Database: MySQL (Offline Mode)
+[[90m16:10:15[0m] Found 0 errors. Watching for file changes.
+
+[Nest] 11796  - 08/11/2025, 16:10:25     LOG [NestFactory] Starting Nest application...
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +433ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] PassportModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] ConfigHostModule dependencies initialized +6ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] AppModule dependencies initialized +6ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] ConfigModule dependencies initialized +4ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] ConfigModule dependencies initialized +3ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] AnalystsModule dependencies initialized +14ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] BillingModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] JwtModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] JwtModule dependencies initialized +4ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseCoreModule dependencies initialized +55ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +73ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +8ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] MongooseModule dependencies initialized +2ms
+[Nest] 11796  - 08/11/2025, 16:10:26     LOG [InstanceLoader] AuditModule dependencies initialized +19ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] UsersModule dependencies initialized +2601ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] NotificationsModule dependencies initialized +5ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] AppointmentsModule dependencies initialized +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] AnalyticsModule dependencies initialized +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] EyeTestsModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] PrescriptionsModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] PharmacyModule dependencies initialized +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] AuthModule dependencies initialized +6ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] PatientsModule dependencies initialized +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] CasesModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] AdminModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] ChatModule dependencies initialized +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] FaceRecognitionModule dependencies initialized +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [InstanceLoader] DoctorsModule dependencies initialized +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [WebSocketsController] ChatGateway subscribed to the "send_message" message +212ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [WebSocketsController] ChatGateway subscribed to the "join_conversation" message +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] AppController {/}: +14ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/, GET} route +20ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/health, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] AuthController {/auth}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/auth/register, POST} route +16ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/auth/login, POST} route +9ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/auth/profile, GET} route +7ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/auth/refresh, POST} route +12ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] BiometricController {/biometric}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/face/register, POST} route +17ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/face/recognize, POST} route +9ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/face/my-face, GET} route +7ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/face/check-in, POST} route +12ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/document/scan, POST} route +12ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/document/my-documents, GET} route +13ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/document/:type, GET} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/biometric/document/:id/verify, POST} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] UsersController {/users}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/users/me, GET} route +8ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/users/:id, GET} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] PatientsController {/patients}: +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/profile, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/profile, PUT} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/medical-history, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/unified-journey, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/suggested-appointments, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/appointments/:id/wait-time, GET} route +8ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/health-timeline, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/comparative-analysis, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/ai-insights, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/prescription-tracking, GET} route +11ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/billing-history, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/health-dashboard, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/final-results, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/journey/check-in, POST} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/journey, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/journey/active, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/journey/:step/complete, POST} route +5ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/patients/journey/receipt, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] NotificationsController {/notifications}: +5ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/notifications, GET} route +6ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/notifications/unread-count, GET} route +9ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/notifications/:id/read, PUT} route +6ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/notifications/mark-all-read, PUT} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/notifications/:id, DELETE} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] AppointmentsController {/appointments}: +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/appointments, POST} route +7ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/appointments/my-appointments, GET} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/appointments/upcoming, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/appointments/:id, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/appointments/:id, PUT} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/appointments/:id/cancel, PUT} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] EyeTestsController {/eye-tests}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests, POST} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests/my-tests, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests/pending-analysis, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests/for-doctor, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests/:id, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests/:id/analyze, POST} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests/:id/analyst-notes, PUT} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/eye-tests/:id/doctor-review, PUT} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] AnalystsController {/analysts}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/analysts/pending-tests, GET} route +6ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/analysts/tests/:id/analyze, POST} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/analysts/tests/:id/notes, PUT} route +11ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] DoctorsController {/doctors}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/doctors/assigned-patients, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/doctors/cases, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/doctors/appointments, GET} route +12ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/doctors/tests/:id/review, PUT} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/doctors/prescriptions, POST} route +15ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] PrescriptionsController {/prescriptions}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/my-prescriptions, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/:id, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/:id/assign-pharmacy, PUT} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/:id/fill, PUT} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/ai-suggestions, POST} route +8ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/templates, GET} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/templates, POST} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/templates/:id, GET} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/prescriptions/:id/sign, POST} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] AdminController {/admin}: +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users/activity, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users/:id/activity, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users/:id, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users/:id, PUT} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users/:id/role, PUT} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users/:id/revoke-access, POST} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/users/:id, DELETE} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/analytics, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/devices, GET} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/devices/:deviceId, PUT} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/devices/alerts, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/appointments/analytics, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/billing/analytics, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/analytics/comprehensive, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/security/audit-logs, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/security/status, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/settings, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/settings, PUT} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/admin/devices/:deviceId/calibrate, POST} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] PharmacyController {/pharmacy}: +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/qr, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/validate, POST} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/status, PUT} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/fill, PUT} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/ai-suggestions, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/stock-forecast, GET} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/inventory, GET} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/inventory/low-stock, GET} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/inventory/expiring-soon, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/inventory, POST} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/inventory/:id, PUT} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/suppliers, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/suppliers, POST} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/suppliers/:id/rating, PUT} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/delivery, POST} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/prescriptions/:id/delivery-status, PUT} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/analytics, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/pharmacy/analytics/drug-demand, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] ChatController {/chat}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/chat/conversation, GET} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/chat/message, POST} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/chat/contacts, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/chat/message/:id/read, PUT} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] CasesController {/cases}: +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/cases, POST} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/cases/my-cases, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/cases/:id, GET} route +5ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/cases/:id/status, PUT} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/cases/:id/delegate, PUT} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/cases/:id/assign, PUT} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/cases/:id/timeline, POST} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] AnalyticsController {/analytics}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/analytics/doctor-performance, GET} route +4ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/analytics/doctor-performance/:doctorId, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/analytics/clinic-insights, GET} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/analytics/test-trends, GET} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] BillingController {/billing}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/billing/payment, POST} route +2ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RoutesResolver] FaceRecognitionController {/face-recognition}: +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/face-recognition/register/:patientId, POST} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/face-recognition/recognize, POST} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/face-recognition/registered, GET} route +3ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/face-recognition/remove/:patientId, DELETE} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/face-recognition/check-dependencies, GET} route +5ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/face-recognition/register-base64/:patientId, POST} route +0ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [RouterExplorer] Mapped {/face-recognition/recognize-base64, POST} route +1ms
+[Nest] 11796  - 08/11/2025, 16:10:29     LOG [NestApplication] Nest application successfully started +49ms
+✅ Application is running on: http://localhost:3001
+📊 Health check: http://localhost:3001/health
+🌐 CORS enabled for: http://localhost:3000
+💾 Database: MySQL (Offline Mode)
+[Nest] 11796  - 08/11/2025, 16:44:03   ERROR [ExceptionsHandler] Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+CastError: Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+    at SchemaNumber.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:381:11)
+    at SchemaNumber.handleSingle (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:390:15)
+    at SchemaNumber.castForQuery (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:446:20)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:367:39)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:76:20)
+    at Query.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:5060:12)
+    at Query._castConditions (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2374:10)
+    at model.Query._find (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2401:8)
+    at model.Query.exec (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:4627:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[Nest] 11796  - 08/11/2025, 16:44:03   ERROR [ExceptionsHandler] Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+CastError: Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+    at SchemaNumber.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:381:11)
+    at SchemaNumber.handleSingle (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:390:15)
+    at SchemaNumber.castForQuery (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:446:20)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:367:39)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:76:20)
+    at Query.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:5060:12)
+    at Query._castConditions (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2374:10)
+    at model.Query._find (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2401:8)
+    at model.Query.exec (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:4627:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[Nest] 11796  - 08/11/2025, 16:46:23   ERROR [ExceptionsHandler] Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+CastError: Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+    at SchemaNumber.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:381:11)
+    at SchemaNumber.handleSingle (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:390:15)
+    at SchemaNumber.castForQuery (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:446:20)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:367:39)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:76:20)
+    at Query.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:5060:12)
+    at Query._castConditions (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2374:10)
+    at model.Query._find (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2401:8)
+    at model.Query.exec (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:4627:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[Nest] 11796  - 08/11/2025, 16:46:23   ERROR [ExceptionsHandler] Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+CastError: Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+    at SchemaNumber.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:381:11)
+    at SchemaNumber.handleSingle (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:390:15)
+    at SchemaNumber.castForQuery (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:446:20)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:367:39)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:76:20)
+    at Query.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:5060:12)
+    at Query._castConditions (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2374:10)
+    at model.Query._find (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2401:8)
+    at model.Query.exec (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:4627:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[Nest] 11796  - 08/11/2025, 16:50:33   ERROR [ExceptionsHandler] Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+CastError: Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+    at SchemaNumber.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:381:11)
+    at SchemaNumber.handleSingle (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:390:15)
+    at SchemaNumber.castForQuery (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:446:20)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:367:39)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:76:20)
+    at Query.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:5060:12)
+    at Query._castConditions (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2374:10)
+    at model.Query._find (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2401:8)
+    at model.Query.exec (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:4627:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[Nest] 11796  - 08/11/2025, 16:50:33   ERROR [ExceptionsHandler] Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+CastError: Cast to Number failed for value "{ '$ifNull': [ '$reorderLevel', 10 ] }" (type Object) at path "stock" for model "InventoryItem"
+    at SchemaNumber.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:381:11)
+    at SchemaNumber.handleSingle (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:390:15)
+    at SchemaNumber.castForQuery (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/schema/number.js:446:20)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:367:39)
+    at cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/cast.js:76:20)
+    at Query.cast (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:5060:12)
+    at Query._castConditions (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2374:10)
+    at model.Query._find (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:2401:8)
+    at model.Query.exec (/home/ayoa/Documents/vision pro/backend/node_modules/mongoose/lib/query.js:4627:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

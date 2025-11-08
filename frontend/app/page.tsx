@@ -1,47 +1,40 @@
-'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+"use client";
 
-export default function Home() {
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
+import { useAuth } from "@/lib/auth-context";
+
+const roleRedirectMap: Record<string, string> = {
+  patient: "/dashboard/patient",
+  analyst: "/dashboard/analyst",
+  doctor: "/dashboard/doctor",
+  admin: "/dashboard/admin",
+  pharmacy: "/dashboard/pharmacy",
+};
+
+export default function Home(): JSX.Element {
   const router = useRouter();
   const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        // Redirect based on role
-        switch (user.role) {
-          case 'patient':
-            router.push('/dashboard/patient');
-            break;
-          case 'analyst':
-            router.push('/dashboard/analyst');
-            break;
-          case 'doctor':
-            router.push('/dashboard/doctor');
-            break;
-          case 'admin':
-            router.push('/dashboard/admin');
-            break;
-          case 'pharmacy':
-            router.push('/dashboard/pharmacy');
-            break;
-          default:
-            router.push('/login');
-        }
-      } else {
-        router.push('/login');
-      }
-    }
+    if (loading) return;
+
+    const target = user ? roleRedirectMap[user.role] ?? "/login" : "/login";
+
+    // Use replace so the landing page is not preserved in history
+    router.replace(target);
   }, [user, loading, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="flex flex-col items-center gap-3 text-muted-foreground">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-sm">Preparing your dashboard…</p>
+      </div>
     </div>
   );
 }
-
 

@@ -1,0 +1,11 @@
+// Prisma schema for Vision Smart Clinic with MySQL (Offline)
+// MySQL can run completely offline on your local machine
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}

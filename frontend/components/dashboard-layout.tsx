@@ -29,7 +29,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: '/dashboard/analyst', label: 'Analyst Dashboard', roles: ['analyst', 'admin'] },
     { href: '/dashboard/doctor', label: 'Doctor Dashboard', roles: ['doctor', 'admin'] },
     { href: '/dashboard/admin', label: 'Admin Panel', roles: ['admin'] },
-    { href: '/dashboard/pharmacy', label: 'Pharmacy', roles: ['pharmacy', 'admin'] },
   ];
 
   const visibleNavItems = navItems.filter(

@@ -6,10 +6,14 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
     
-    // Enable CORS
+    // Enable CORS for offline operation
     app.enableCors({
-      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+      origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
       credentials: true,
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
     });
 
     // Enable validation pipes
@@ -25,9 +29,8 @@ async function bootstrap() {
     await app.listen(port);
     console.log(`✅ Application is running on: http://localhost:${port}`);
     console.log(`📊 Health check: http://localhost:${port}/health`);
-    
-    // Log MongoDB connection status
-    console.log(`📦 MongoDB: ${process.env.MONGODB_URI || 'mongodb://localhost:27017/vision-clinic'}`);
+    console.log(`🌐 CORS enabled for: http://localhost:3000`);
+    console.log(`💾 Database: MySQL (Offline Mode)`);
   } catch (error: any) {
     console.error('❌ Server startup error:', error);
     console.error('Error details:', error.message);
@@ -40,4 +43,3 @@ bootstrap().catch((error) => {
   console.error('❌ Failed to start server:', error);
   process.exit(1);
 });
-

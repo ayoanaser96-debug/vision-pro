@@ -31,7 +31,9 @@ export class AuthController {
       address?: string;
     },
   ) {
-    return this.authService.register(registerDto);
+    const createdUser = await this.authService.register(registerDto);
+    // Return token + user so frontend can be logged in immediately after registration
+    return this.authService.login(createdUser);
   }
 
   @UseGuards(LocalAuthGuard)
@@ -52,5 +54,4 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 }
-
 

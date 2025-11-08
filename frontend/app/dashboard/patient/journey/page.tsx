@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -596,4 +597,3 @@ Thank you for visiting Vision Smart Clinic!
     </DashboardLayout>
   );
 }
-

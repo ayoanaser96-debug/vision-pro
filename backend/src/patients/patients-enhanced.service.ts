@@ -539,6 +539,83 @@ export class PatientsEnhancedService {
     const completed = prescriptions.filter((p: any) => p.status === 'completed' || p.status === 'filled').length;
     return Math.round((completed / prescriptions.length) * 100);
   }
-}
 
+  // 8. Final Results Summary (Doctor diagnosis, Analyst result, Pharmacy prescription)
+  async getFinalResultsSummary(patientId: string) {
+    const [latestTest, latestPrescription, latestCase] = await Promise.all([
+      this.eyeTestModel
+        .findOne({ patientId })
+        .populate('doctorId')
+        .populate('analystId')
+        .sort({ createdAt: -1 })
+        .lean(),
+      this.prescriptionModel
+        .findOne({ patientId })
+        .populate('doctorId')
+        .populate('pharmacyId')
+        .sort({ createdAt: -1 })
+        .lean(),
+      this.caseModel
+        .findOne({ patientId })
+        .populate('assignedDoctors')
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
+
+    const analystSummary = latestTest
+      ? {
+          testId: latestTest._id,
+          date: latestTest.createdAt,
+          analyst: latestTest.analystId && typeof latestTest.analystId === 'object' && 'firstName' in latestTest.analystId
+            ? `${(latestTest.analystId as any).firstName} ${(latestTest.analystId as any).lastName}`
+            : null,
+          doctor: latestTest.doctorId && typeof latestTest.doctorId === 'object' && 'firstName' in latestTest.doctorId
+            ? `${(latestTest.doctorId as any).firstName} ${(latestTest.doctorId as any).lastName}`
+            : null,
+          status: latestTest.status,
+          aiAnalysis: latestTest.aiAnalysis || null,
+          notes: latestTest.analystNotes || latestTest.doctorNotes || null,
+        }
+      : null;
+
+    const diagnosisSummary = latestCase
+      ? {
+          caseId: latestCase._id,
+          date: latestCase.createdAt,
+          diagnosis: latestCase.diagnosis || null,
+          status: latestCase.status,
+          priority: latestCase.priority,
+          doctors:
+            Array.isArray(latestCase.assignedDoctors)
+              ? latestCase.assignedDoctors.map((d: any) => `${d.firstName} ${d.lastName}`)
+              : [],
+          notes: latestCase.notes || null,
+        }
+      : null;
+
+    const prescriptionSummary = latestPrescription
+      ? {
+          prescriptionId: latestPrescription._id,
+          date: latestPrescription.createdAt,
+          status: latestPrescription.status,
+          doctor: latestPrescription.doctorId && typeof latestPrescription.doctorId === 'object' && 'firstName' in latestPrescription.doctorId
+            ? `${(latestPrescription.doctorId as any).firstName} ${(latestPrescription.doctorId as any).lastName}`
+            : null,
+          pharmacy: latestPrescription.pharmacyId && typeof latestPrescription.pharmacyId === 'object' && ('name' in latestPrescription.pharmacyId || 'firstName' in latestPrescription.pharmacyId)
+            ? `${(latestPrescription.pharmacyId as any).name || (latestPrescription.pharmacyId as any).firstName || ''}`.trim() || null
+            : null,
+          medications: latestPrescription.medications || [],
+          glasses: latestPrescription.glasses || [],
+          notes: latestPrescription.notes || null,
+        }
+      : null;
+
+    return {
+      analystSummary,
+      diagnosisSummary,
+      prescriptionSummary,
+      updatedAt: new Date(),
+    };
+  }
+}
 

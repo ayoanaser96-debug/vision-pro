@@ -1,0 +1,55 @@
+
+> vision-clinic-frontend@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.33
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 3.4s
+ ○ Compiling / ...
+ ✓ Compiled / in 6.3s (723 modules)
+ GET / 200 in 6884ms
+ ✓ Compiled in 1154ms (332 modules)
+ GET / 200 in 65ms
+ ○ Compiling /dashboard/admin ...
+ ✓ Compiled /dashboard/admin in 4.1s (1821 modules)
+ GET / 200 in 479ms
+ ✓ Compiled in 15.9s (1831 modules)
+ ✓ Compiled in 2.5s (1831 modules)
+ ✓ Compiled in 4s (1831 modules)
+ ✓ Compiled in 3.7s (1831 modules)
+ GET /dashboard/admin 200 in 852ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 3.9s (1859 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 772ms (970 modules)
+ GET /login 200 in 385ms
+ GET /login 200 in 235ms
+ GET /login 200 in 261ms
+ ○ Compiling /dashboard/patient ...
+ ✓ Compiled /dashboard/patient in 6.5s (1911 modules)
+ ○ Compiling /dashboard/patient/journey ...
+ ✓ Compiled /dashboard/patient/journey in 1491ms (1921 modules)
+ ✓ Compiled in 32s (1935 modules)
+ ✓ Compiled in 5.8s (1935 modules)
+ ✓ Compiled in 14.1s (1935 modules)
+ ✓ Compiled in 6.7s (1937 modules)
+ ✓ Compiled in 2.4s (1937 modules)
+ ○ Compiling /dashboard/patient/chat ...
+ ✓ Compiled /dashboard/patient/chat in 6.4s (2029 modules)
+ ✓ Compiled in 4.3s (2043 modules)
+ ✓ Compiled in 5.3s (2043 modules)
+ ✓ Compiled in 1901ms (2043 modules)
+ GET /dashboard/patient 200 in 796ms
+ GET /dashboard/patient 200 in 91ms
+ GET /dashboard/patient/journey 200 in 163ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1775ms (1075 modules)
+ ○ Compiling /dashboard/doctor ...
+ ✓ Compiled /dashboard/doctor in 6.7s (2073 modules)
+ ✓ Compiled in 4.9s (2061 modules)
+ ✓ Compiled in 3.2s (2061 modules)
+ ✓ Compiled in 3.5s (2061 modules)
+ ✓ Compiled in 2.4s (2061 modules)

@@ -91,6 +91,11 @@ export class PatientsController {
     return this.patientsEnhancedService.getHealthDashboard(req.user.id);
   }
 
+  @Get('final-results')
+  async getFinalResults(@Request() req) {
+    return this.patientsEnhancedService.getFinalResultsSummary(req.user.id);
+  }
+
   // Patient Journey Endpoints
   @Post('journey/check-in')
   async checkIn(@Request() req) {

@@ -72,10 +72,27 @@ export default function PatientChatPage() {
 
   useEffect(() => {
     const userId = searchParams.get('userId') || searchParams.get('doctorId');
-    if (userId && contacts.length > 0) {
-      const contact = contacts.find((c: any) => c._id === userId);
-      if (contact) {
-        setSelectedContact(contact);
+    const emergency = searchParams.get('emergency') === 'true';
+    const video = searchParams.get('video') === 'true';
+
+    if (contacts.length > 0) {
+      if (userId) {
+        const contact = contacts.find((c: any) => c._id === userId);
+        if (contact) setSelectedContact(contact);
+      } else if (emergency || video) {
+        // Pick the first doctor contact for quick actions
+        const doctor = contacts.find((c: any) => c.role === 'doctor') || contacts[0];
+        if (doctor) {
+          setSelectedContact(doctor);
+          // Send quick system message
+          const quickMsg = emergency
+            ? 'Emergency support requested. Please respond as soon as possible.'
+            : 'Teleconsultation requested. Please start a video call when available.';
+          api
+            .post('/chat/message', { receiverId: doctor._id, message: quickMsg })
+            .then(() => loadConversation(doctor._id))
+            .catch(() => {});
+        }
       }
     }
   }, [searchParams, contacts]);
@@ -126,15 +143,6 @@ export default function PatientChatPage() {
             role: 'doctor',
             specialty: pres.doctorId.specialty,
             lastMessage: 'Prescription created',
-          });
-        }
-        if (pres.pharmacyId && !contactsMap.has(pres.pharmacyId._id)) {
-          contactsMap.set(pres.pharmacyId._id, {
-            _id: pres.pharmacyId._id,
-            firstName: pres.pharmacyId.firstName || 'Pharmacy',
-            lastName: pres.pharmacyId.lastName || '',
-            role: 'pharmacy',
-            lastMessage: 'Prescription assigned',
           });
         }
       });
@@ -302,10 +310,36 @@ export default function PatientChatPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!selectedContact) return;
+                      api
+                        .post('/chat/message', {
+                          receiverId: selectedContact._id,
+                          message: 'Please call me when available.',
+                        })
+                        .then(() => loadConversation(selectedContact._id))
+                        .catch(() => {});
+                    }}
+                  >
                     <Phone className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!selectedContact) return;
+                      api
+                        .post('/chat/message', {
+                          receiverId: selectedContact._id,
+                          message: 'Teleconsultation (video) requested.',
+                        })
+                        .then(() => loadConversation(selectedContact._id))
+                        .catch(() => {});
+                    }}
+                  >
                     <Video className="h-4 w-4" />
                   </Button>
                 </div>
@@ -386,4 +420,3 @@ export default function PatientChatPage() {
     </DashboardLayout>
   );
 }
-

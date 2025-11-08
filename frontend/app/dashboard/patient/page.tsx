@@ -88,8 +88,10 @@ export default function PatientDashboard() {
   const [comparativeAnalysis, setComparativeAnalysis] = useState<any>(null);
   const [aiInsights, setAiInsights] = useState<any>(null);
   const [prescriptionTracking, setPrescriptionTracking] = useState([]);
+  const [pharmacyStatuses, setPharmacyStatuses] = useState<any>({});
   const [billingHistory, setBillingHistory] = useState<any>(null);
   const [healthDashboard, setHealthDashboard] = useState<any>(null);
+  const [finalResults, setFinalResults] = useState<any>(null);
   const [waitTime, setWaitTime] = useState<any>(null);
   const [bookingData, setBookingData] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -144,6 +146,7 @@ export default function PatientDashboard() {
         prescriptionsRes,
         billingRes,
         dashboardRes,
+        finalResultsRes,
       ] = await Promise.all([
         api.get('/patients/unified-journey'),
         api.get('/patients/health-timeline'),
@@ -151,14 +154,22 @@ export default function PatientDashboard() {
         api.get('/patients/prescription-tracking'),
         api.get('/patients/billing-history'),
         api.get('/patients/health-dashboard'),
+        api.get('/patients/final-results'),
       ]);
 
       setUnifiedJourney(journeyRes.data);
       setHealthTimeline(timelineRes.data || []);
       setAiInsights(insightsRes.data);
       setPrescriptionTracking(prescriptionsRes.data || []);
+      // derive simple pharmacy status map for quick badges
+      const statusMap: any = {};
+      (prescriptionsRes.data || []).forEach((p: any) => {
+        statusMap[p._id] = p.status;
+      });
+      setPharmacyStatuses(statusMap);
       setBillingHistory(billingRes.data);
       setHealthDashboard(dashboardRes.data);
+      setFinalResults(finalResultsRes.data);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -714,6 +725,88 @@ export default function PatientDashboard() {
           </Card>
         )}
 
+        {/* Final Results Summary - Doctor Diagnosis, Analyst Result, Pharmacy Prescription */}
+        {finalResults && (
+          <Card className="card-modern animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
+            <CardHeader>
+              <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+                <Stethoscope className="h-5 w-5 text-primary" />
+                Final Results Summary
+              </CardTitle>
+              <CardDescription className="text-sm">Doctor diagnosis, analyst findings, and latest prescription</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-3">
+                {/* Doctor Diagnosis */}
+                <div className="p-3 rounded-lg border bg-accent/10 dark:bg-accent/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Stethoscope className="h-4 w-4" />
+                    <span className="text-sm font-semibold text-foreground">Doctor Diagnosis</span>
+                  </div>
+                  {finalResults.diagnosisSummary ? (
+                    <div className="space-y-1 text-sm">
+                      <div className="font-medium text-foreground">{finalResults.diagnosisSummary.diagnosis || '—'}</div>
+                      <div className="text-muted-foreground">Status: {finalResults.diagnosisSummary.status || '—'}</div>
+                      {finalResults.diagnosisSummary.doctors?.length > 0 && (
+                        <div className="text-muted-foreground">By: {finalResults.diagnosisSummary.doctors.join(', ')}</div>
+                      )}
+                      <div className="text-xs text-muted-foreground">{finalResults.diagnosisSummary.notes || ''}</div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No diagnosis yet</div>
+                  )}
+                </div>
+
+                {/* Analyst Result */}
+                <div className="p-3 rounded-lg border bg-accent/10 dark:bg-accent/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Microscope className="h-4 w-4" />
+                    <span className="text-sm font-semibold text-foreground">Analyst Result</span>
+                  </div>
+                  {finalResults.analystSummary ? (
+                    <div className="space-y-1 text-sm">
+                      <div className="text-muted-foreground">Status: {finalResults.analystSummary.status || '—'}</div>
+                      {finalResults.analystSummary.aiAnalysis && (
+                        <div className="text-xs text-muted-foreground">AI: available</div>
+                      )}
+                      <div className="text-xs text-muted-foreground">{finalResults.analystSummary.notes || ''}</div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No analyst result yet</div>
+                  )}
+                </div>
+
+                {/* Pharmacy Prescription */}
+                <div className="p-3 rounded-lg border bg-accent/10 dark:bg-accent/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Pill className="h-4 w-4" />
+                    <span className="text-sm font-semibold text-foreground">Latest Prescription</span>
+                  </div>
+                  {finalResults.prescriptionSummary ? (
+                    <div className="space-y-1 text-sm">
+                      <div className="text-muted-foreground">Status: {finalResults.prescriptionSummary.status || '—'}</div>
+                      {finalResults.prescriptionSummary.doctor && (
+                        <div className="text-muted-foreground">Doctor: {finalResults.prescriptionSummary.doctor}</div>
+                      )}
+                      {finalResults.prescriptionSummary.pharmacy && (
+                        <div className="text-muted-foreground">Pharmacy: {finalResults.prescriptionSummary.pharmacy}</div>
+                      )}
+                      <div className="text-xs text-muted-foreground">
+                        Medications: {finalResults.prescriptionSummary.medications?.length || 0} • Glasses: {finalResults.prescriptionSummary.glasses?.length || 0}
+                      </div>
+                      {finalResults.prescriptionSummary.notes && (
+                        <div className="text-xs text-muted-foreground">{finalResults.prescriptionSummary.notes}</div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No prescriptions yet</div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="card-modern hover:border-primary/50 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
@@ -1227,7 +1320,7 @@ export default function PatientDashboard() {
             <Card>
               <CardHeader>
                 <CardTitle>Prescription & Medication Management</CardTitle>
-                <CardDescription>Digital prescriptions, pharmacy connection, auto refill alerts</CardDescription>
+                <CardDescription>Digital prescriptions and medication management</CardDescription>
               </CardHeader>
               <CardContent>
                 {prescriptionTracking.length > 0 ? (
@@ -1244,6 +1337,17 @@ export default function PatientDashboard() {
                                 {prescription.doctorId && (
                                   <span className="text-sm font-bold text-primary">
                                     Dr. {prescription.doctorId.firstName} {prescription.doctorId.lastName}
+                                  </span>
+                                )}
+                                {prescription.pharmacyId && (
+                                  <span className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1">
+                                      <Pill className="h-3 w-3" />
+                                      Pharmacy: {prescription.pharmacyId.firstName}
+                                    </span>
+                                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                      {pharmacyStatuses[prescription._id] || 'processing'}
+                                    </Badge>
                                   </span>
                                 )}
                                 <span className="text-xs text-muted-foreground">
@@ -1331,14 +1435,6 @@ export default function PatientDashboard() {
                                     </div>
                                   )}
                                   
-                                  {prescription.tracking.pharmacyStatus === 'assigned' && prescription.pharmacyId && (
-                                    <div className="mt-2 pt-2 border-t border-blue-200">
-                                      <p className="text-xs font-medium">Pharmacy:</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {prescription.pharmacyId.firstName} {prescription.pharmacyId.lastName}
-                                      </p>
-                                    </div>
-                                  )}
                                 </div>
                               )}
 
@@ -1586,12 +1682,7 @@ export default function PatientDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => {
-                    toast({ 
-                      title: 'Teleconsultation', 
-                      description: 'Video consultation feature will be available soon. You can start a video call with your doctor for remote consultations.' 
-                    });
-                  }}>
+                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => router.push('/dashboard/patient/chat?video=true')}>
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <Video className="h-5 w-5" />
@@ -1599,7 +1690,7 @@ export default function PatientDashboard() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">Video consultations with secure file sharing</p>
+                      <p className="text-sm text-muted-foreground">Start a video consultation request</p>
                     </CardContent>
                   </Card>
 
@@ -1621,12 +1712,7 @@ export default function PatientDashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => {
-                    toast({ 
-                      title: 'Feedback & Ratings', 
-                      description: 'Feedback system will be available soon. You can rate your doctor, visit, or pharmacy experience.' 
-                    });
-                  }}>
+                  <Card className="cursor-pointer hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors" onClick={() => router.push('/dashboard/patient/chat')}>
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <Heart className="h-5 w-5" />
@@ -1634,7 +1720,7 @@ export default function PatientDashboard() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">Rate your doctor, visit, or pharmacy experience</p>
+                      <p className="text-sm text-muted-foreground">Send feedback via secure messaging</p>
                     </CardContent>
                   </Card>
                 </div>
