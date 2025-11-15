@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../users/schemas/user.schema';
-import { EyeTest, EyeTestDocument } from '../eye-tests/schemas/eye-test.schema';
-import { Appointment, AppointmentDocument } from '../appointments/schemas/appointment.schema';
-import { Prescription, PrescriptionDocument } from '../prescriptions/schemas/prescription.schema';
-import { Case, CaseDocument } from '../cases/schemas/case.schema';
-import { SystemSettings, SystemSettingsDocument } from './schemas/system-settings.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserRole, AppointmentStatus, PrescriptionStatus, CaseStatus } from '@prisma/client';
 
 // Device Monitoring Schema (inline for now)
 export interface DeviceStatus {
@@ -47,19 +41,31 @@ export class AdminEnhancedService {
   ];
 
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(EyeTest.name) private eyeTestModel: Model<EyeTestDocument>,
-    @InjectModel(Appointment.name) private appointmentModel: Model<AppointmentDocument>,
-    @InjectModel(Prescription.name) private prescriptionModel: Model<PrescriptionDocument>,
-    @InjectModel(Case.name) private caseModel: Model<CaseDocument>,
-    @InjectModel(SystemSettings.name) private settingsModel: Model<SystemSettingsDocument>,
+    private prisma: PrismaService,
   ) {}
 
   // 1. Smart User & Role Management
   async getUsersWithActivity() {
-    const users = await this.userModel.find().select('-password').lean();
+    const users = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        phone: true,
+        nationalId: true,
+        specialty: true,
+        dateOfBirth: true,
+        address: true,
+        createdAt: true,
+        updatedAt: true,
+        emailVerified: true,
+      },
+    });
     // Add activity tracking (in production, this would be from a sessions/activity collection)
-    return users.map((user: any) => ({
+    return users.map((user) => ({
       ...user,
       lastLogin: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random last 7 days
       isActive: Math.random() > 0.3,
@@ -68,19 +74,49 @@ export class AdminEnhancedService {
   }
 
   async updateUserRole(userId: string, role: string, permissions?: any) {
-    return this.userModel.findByIdAndUpdate(
-      userId,
-      { role, permissions },
-      { new: true },
-    ).select('-password');
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { role: role as UserRole },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        phone: true,
+        nationalId: true,
+        specialty: true,
+        dateOfBirth: true,
+        address: true,
+        createdAt: true,
+        updatedAt: true,
+        emailVerified: true,
+      },
+    });
   }
 
   async revokeUserAccess(userId: string) {
-    return this.userModel.findByIdAndUpdate(
-      userId,
-      { status: 'suspended' },
-      { new: true },
-    ).select('-password');
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { status: 'SUSPENDED' },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        phone: true,
+        nationalId: true,
+        specialty: true,
+        dateOfBirth: true,
+        address: true,
+        createdAt: true,
+        updatedAt: true,
+        emailVerified: true,
+      },
+    });
   }
 
   async getUserActivity(userId: string, days: number = 30) {
@@ -148,26 +184,29 @@ export class AdminEnhancedService {
 
   // 3. Appointment Analytics & Scheduling
   async getAppointmentAnalytics(startDate?: Date, endDate?: Date) {
-    const query: any = {};
-    if (startDate) query.appointmentDate = { $gte: startDate };
-    if (endDate && query.appointmentDate) {
-      query.appointmentDate.$lte = endDate;
+    const where: any = {};
+    if (startDate) where.appointmentDate = { gte: startDate };
+    if (endDate) {
+      where.appointmentDate = { ...where.appointmentDate, lte: endDate };
     }
 
-    const appointments = await this.appointmentModel.find(query).populate('doctorId').lean();
+    const appointments = await this.prisma.appointment.findMany({
+      where,
+      include: { doctor: true },
+    });
     
     // Calculate wait times (simulated)
     const avgWaitTime = Math.floor(Math.random() * 30) + 10; // 10-40 minutes
     
     // Predict wait time based on queue
-    const pendingCount = appointments.filter((apt: any) => apt.status === 'scheduled').length;
+    const pendingCount = appointments.filter((apt) => apt.status === AppointmentStatus.CONFIRMED).length;
     const predictedWait = pendingCount * 15; // 15 min per appointment
 
     return {
       total: appointments.length,
-      scheduled: appointments.filter((apt: any) => apt.status === 'scheduled').length,
-      completed: appointments.filter((apt: any) => apt.status === 'completed').length,
-      cancelled: appointments.filter((apt: any) => apt.status === 'cancelled').length,
+      scheduled: appointments.filter((apt) => apt.status === AppointmentStatus.CONFIRMED).length,
+      completed: appointments.filter((apt) => apt.status === AppointmentStatus.COMPLETED).length,
+      cancelled: appointments.filter((apt) => apt.status === AppointmentStatus.CANCELLED).length,
       avgWaitTime,
       predictedWaitTime: predictedWait,
       byDay: this.groupAppointmentsByDay(appointments),
@@ -177,7 +216,7 @@ export class AdminEnhancedService {
 
   private groupAppointmentsByDay(appointments: any[]) {
     const grouped: Record<string, number> = {};
-    appointments.forEach((apt: any) => {
+    appointments.forEach((apt) => {
       const date = new Date(apt.appointmentDate).toISOString().split('T')[0];
       grouped[date] = (grouped[date] || 0) + 1;
     });
@@ -186,31 +225,34 @@ export class AdminEnhancedService {
 
   private groupAppointmentsByDoctor(appointments: any[]) {
     const grouped: Record<string, number> = {};
-    appointments.forEach((apt: any) => {
-      const doctorId = apt.doctorId?._id?.toString() || 'unassigned';
+    appointments.forEach((apt) => {
+      const doctorId = apt.doctorId || 'unassigned';
       grouped[doctorId] = (grouped[doctorId] || 0) + 1;
     });
     return Object.entries(grouped).map(([doctorId, count]) => ({
       doctorId,
-      doctorName: appointments.find((apt: any) => 
-        apt.doctorId?._id?.toString() === doctorId
-      )?.doctorId?.firstName || 'Unassigned',
+      doctorName: appointments.find((apt) => 
+        apt.doctorId === doctorId
+      )?.doctor?.firstName || 'Unassigned',
       count,
     }));
   }
 
   // 4. Billing & Financial Management
   async getBillingAnalytics(startDate?: Date, endDate?: Date) {
-    const query: any = {};
-    if (startDate) query.createdAt = { $gte: startDate };
+    const where: any = {};
+    if (startDate) where.createdAt = { gte: startDate };
+    if (endDate) {
+      where.createdAt = { ...where.createdAt, lte: endDate };
+    }
 
-    const prescriptions = await this.prescriptionModel.find(query).lean();
-    const appointments = await this.appointmentModel.find(query).lean();
+    const prescriptions = await this.prisma.prescription.findMany({ where });
+    const appointments = await this.prisma.appointment.findMany({ where });
 
     // Simulated billing data
     const revenue = {
       prescriptions: prescriptions.length * 50, // $50 per prescription
-      appointments: appointments.filter((apt: any) => apt.status === 'completed').length * 100, // $100 per appointment
+      appointments: appointments.filter((apt) => apt.status === AppointmentStatus.COMPLETED).length * 100, // $100 per appointment
       total: 0,
     };
     revenue.total = revenue.prescriptions + revenue.appointments;
@@ -223,8 +265,8 @@ export class AdminEnhancedService {
       byDay: this.groupBillingByDay(prescriptions, appointments),
       currency: 'USD', // In production, this would come from clinic settings
       fraudAlerts,
-      pendingInvoices: appointments.filter((apt: any) => apt.status === 'scheduled').length,
-      paidInvoices: appointments.filter((apt: any) => apt.status === 'completed').length,
+      pendingInvoices: appointments.filter((apt) => apt.status === AppointmentStatus.CONFIRMED).length,
+      paidInvoices: appointments.filter((apt) => apt.status === AppointmentStatus.COMPLETED).length,
     };
   }
 
@@ -263,7 +305,7 @@ export class AdminEnhancedService {
   private groupBillingByDay(prescriptions: any[], appointments: any[]) {
     const grouped: Record<string, { prescriptions: number; appointments: number; revenue: number }> = {};
     
-    [...prescriptions, ...appointments].forEach((item: any) => {
+    [...prescriptions, ...appointments].forEach((item) => {
       const date = new Date(item.createdAt || item.appointmentDate).toISOString().split('T')[0];
       if (!grouped[date]) {
         grouped[date] = { prescriptions: 0, appointments: 0, revenue: 0 };
@@ -282,19 +324,19 @@ export class AdminEnhancedService {
 
   // 5. AI-Driven Analytics
   async getComprehensiveAnalytics(startDate?: Date, endDate?: Date) {
-    const query: any = {};
-    if (startDate) query.createdAt = { $gte: startDate };
-    if (endDate && query.createdAt) {
-      query.createdAt.$lte = endDate;
+    const where: any = {};
+    if (startDate) where.createdAt = { gte: startDate };
+    if (endDate) {
+      where.createdAt = { ...where.createdAt, lte: endDate };
     }
 
     const [patients, doctors, tests, cases, prescriptions, appointments] = await Promise.all([
-      this.userModel.countDocuments({ role: 'patient' }),
-      this.userModel.countDocuments({ role: 'doctor' }),
-      this.eyeTestModel.countDocuments(query),
-      this.caseModel.countDocuments(query),
-      this.prescriptionModel.countDocuments(query),
-      this.appointmentModel.countDocuments(query),
+      this.prisma.user.count({ where: { role: UserRole.PATIENT } }),
+      this.prisma.user.count({ where: { role: UserRole.DOCTOR } }),
+      this.prisma.eyeTest.count({ where }),
+      this.prisma.case.count({ where }),
+      this.prisma.prescription.count({ where }),
+      this.prisma.appointment.count({ where }),
     ]);
 
     // Disease distribution
@@ -327,7 +369,7 @@ export class AdminEnhancedService {
   }
 
   private async getDiseaseDistribution() {
-    const tests = await this.eyeTestModel.find().lean();
+    const tests = await this.prisma.eyeTest.findMany();
     const distribution: Record<string, number> = {
       normal: 0,
       cataract: 0,
@@ -336,14 +378,15 @@ export class AdminEnhancedService {
       refractive_errors: 0,
     };
 
-    tests.forEach((test: any) => {
+    tests.forEach((test) => {
       if (test.aiAnalysis) {
-        if (test.aiAnalysis.cataract?.detected) distribution.cataract++;
-        if (test.aiAnalysis.glaucoma?.detected) distribution.glaucoma++;
-        if (test.aiAnalysis.diabeticRetinopathy?.detected) distribution.diabetic_retinopathy++;
-        if (!test.aiAnalysis.cataract?.detected && 
-            !test.aiAnalysis.glaucoma?.detected && 
-            !test.aiAnalysis.diabeticRetinopathy?.detected) {
+        const analysis = test.aiAnalysis as any;
+        if (analysis.cataract?.detected) distribution.cataract++;
+        if (analysis.glaucoma?.detected) distribution.glaucoma++;
+        if (analysis.diabeticRetinopathy?.detected) distribution.diabetic_retinopathy++;
+        if (!analysis.cataract?.detected && 
+            !analysis.glaucoma?.detected && 
+            !analysis.diabeticRetinopathy?.detected) {
           distribution.normal++;
         }
       }
@@ -356,13 +399,14 @@ export class AdminEnhancedService {
   }
 
   private async getPatientGrowth() {
-    const patients = await this.userModel.find({ role: 'patient' })
-      .select('createdAt')
-      .sort({ createdAt: 1 })
-      .lean();
+    const patients = await this.prisma.user.findMany({
+      where: { role: UserRole.PATIENT },
+      select: { createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
 
     const monthlyGrowth: Record<string, number> = {};
-    patients.forEach((patient: any) => {
+    patients.forEach((patient) => {
       const month = new Date(patient.createdAt).toISOString().slice(0, 7); // YYYY-MM
       monthlyGrowth[month] = (monthlyGrowth[month] || 0) + 1;
     });
@@ -404,31 +448,40 @@ export class AdminEnhancedService {
 
   // System Settings
   async getSettings() {
-    let settings = await this.settingsModel.findOne({ settingsKey: 'global' });
+    let settings = await this.prisma.systemSettings.findUnique({
+      where: { settingsKey: 'global' },
+    });
     if (!settings) {
       // Create default settings
-      settings = new this.settingsModel({
-        settingsKey: 'global',
-        currency: 'USD',
-        language: 'en',
-        theme: 'light',
+      settings = await this.prisma.systemSettings.create({
+        data: {
+          settingsKey: 'global',
+          currency: 'USD',
+          language: 'en',
+          theme: 'light',
+        },
       });
-      await settings.save();
     }
     return settings;
   }
 
   async updateSettings(settingsData: any) {
-    const settings = await this.settingsModel.findOneAndUpdate(
-      { settingsKey: 'global' },
-      {
+    const settings = await this.prisma.systemSettings.upsert({
+      where: { settingsKey: 'global' },
+      update: {
         currency: settingsData.currency,
         language: settingsData.language,
         theme: settingsData.theme,
         otherSettings: settingsData.otherSettings,
       },
-      { upsert: true, new: true },
-    );
+      create: {
+        settingsKey: 'global',
+        currency: settingsData.currency || 'USD',
+        language: settingsData.language || 'en',
+        theme: settingsData.theme || 'light',
+        otherSettings: settingsData.otherSettings || {},
+      },
+    });
     return settings;
   }
 
@@ -447,4 +500,3 @@ export class AdminEnhancedService {
     throw new Error('Device not found');
   }
 }
-

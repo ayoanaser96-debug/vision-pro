@@ -55,7 +55,8 @@ import {
   Workflow,
   Bot,
   Fingerprint,
-  Microscope
+  Microscope,
+  XCircle
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { 
@@ -113,10 +114,21 @@ export default function PatientDashboard() {
   const [personalizedExperience, setPersonalizedExperience] = useState<any>(null);
 
   useEffect(() => {
-    if (!loading && user?.role !== 'patient') {
+    const normalizedRole = user?.role?.toUpperCase() || '';
+    if (!loading && normalizedRole !== 'PATIENT') {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  // Auto-refresh prescriptions every 30 seconds to show real-time updates
+  useEffect(() => {
+    if (user) {
+      const interval = setInterval(() => {
+        loadAllData();
+      }, 30000); // Refresh every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -490,21 +502,25 @@ export default function PatientDashboard() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'ready':
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-      case 'scheduled':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'processing':
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
+    const normalizedStatus = status?.toUpperCase() || '';
+    switch (normalizedStatus) {
+      case 'COMPLETED':
+      case 'FILLED':
+        return 'bg-emerald-500 text-white';
+      case 'READY':
+        return 'bg-green-500 text-white';
+      case 'DELIVERED':
+        return 'bg-purple-500 text-white';
+      case 'PENDING':
+      case 'SCHEDULED':
+        return 'bg-orange-500 text-white';
+      case 'PROCESSING':
+      case 'CONFIRMED':
+        return 'bg-blue-500 text-white';
+      case 'CANCELLED':
+        return 'bg-red-500 text-white';
       default:
-        return 'bg-accent/10 text-accent-foreground dark:bg-accent/20';
+        return 'bg-gray-500 text-white';
     }
   };
 
@@ -1137,10 +1153,16 @@ export default function PatientDashboard() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => router.push(`/dashboard/patient/appointments/${item.id}`)}
+                                    onClick={() => {
+                                      // Show appointment details in a toast or modal
+                                      toast({
+                                        title: 'Appointment Details',
+                                        description: `${item.title} - ${new Date(item.date).toLocaleDateString()} ${item.data?.appointmentTime || ''}`,
+                                      });
+                                    }}
                                     className="border-2 border-primary text-primary bg-primary/10 hover:bg-primary/20 font-semibold"
                                   >
-                                    View
+                                    View Details
                                   </Button>
                                 </div>
                               </div>
@@ -1330,28 +1352,43 @@ export default function PatientDashboard() {
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-2 mb-2 flex-wrap">
                                 <Badge className={getStatusColor(prescription.status)}>
-                                  {prescription.status}
+                                  {prescription.status?.toUpperCase() || 'UNKNOWN'}
                                 </Badge>
-                                {prescription.doctorId && (
+                                {(prescription.doctor || prescription.doctorId) && (
                                   <span className="text-sm font-bold text-primary">
-                                    Dr. {prescription.doctorId.firstName} {prescription.doctorId.lastName}
+                                    Dr. {(prescription.doctor || prescription.doctorId)?.firstName} {(prescription.doctor || prescription.doctorId)?.lastName}
                                   </span>
                                 )}
-                                {prescription.pharmacyId && (
+                                {(prescription.pharmacy || prescription.pharmacyId) && (
                                   <span className="text-sm font-semibold text-foreground flex items-center gap-2">
                                     <span className="inline-flex items-center gap-1">
                                       <Pill className="h-3 w-3" />
-                                      Pharmacy: {prescription.pharmacyId.firstName}
+                                      Pharmacy: {(prescription.pharmacy || prescription.pharmacyId)?.firstName || 'Assigned'}
                                     </span>
-                                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                      {pharmacyStatuses[prescription._id] || 'processing'}
+                                    <Badge className={
+                                      prescription.status?.toUpperCase() === 'READY'
+                                        ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                                        : prescription.status?.toUpperCase() === 'PROCESSING'
+                                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                        : prescription.status?.toUpperCase() === 'DELIVERED'
+                                        ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                                        : prescription.status?.toUpperCase() === 'COMPLETED'
+                                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                        : 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
+                                    }>
+                                      {prescription.status?.toUpperCase() || 'PENDING'}
                                     </Badge>
                                   </span>
                                 )}
                                 <span className="text-xs text-muted-foreground">
                                   {new Date(prescription.createdAt || prescription.updatedAt).toLocaleDateString()}
+                                  {prescription.readyAt && (
+                                    <span className="ml-2 text-green-600">
+                                      Ready: {new Date(prescription.readyAt).toLocaleDateString()}
+                                    </span>
+                                  )}
                                 </span>
                               </div>
 
@@ -1399,6 +1436,67 @@ export default function PatientDashboard() {
                                 <div className="mt-2 p-2 bg-accent/10 dark:bg-accent/20 rounded text-sm">
                                   <p className="font-medium mb-1">Doctor Notes:</p>
                                   <p className="text-muted-foreground">{prescription.notes}</p>
+                                </div>
+                              )}
+
+                              {prescription.pharmacyNotes && (
+                                <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm border border-blue-200">
+                                  <p className="font-medium mb-1 text-blue-900 dark:text-blue-100">Pharmacy Notes:</p>
+                                  <p className="text-blue-800 dark:text-blue-200">{prescription.pharmacyNotes}</p>
+                                </div>
+                              )}
+
+                              {/* Status Update Messages */}
+                              {prescription.status?.toUpperCase() === 'READY' && (
+                                <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200">
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle className="h-5 w-5 text-green-600" />
+                                    <div>
+                                      <p className="font-semibold text-green-900 dark:text-green-100">Prescription Ready!</p>
+                                      <p className="text-sm text-green-800 dark:text-green-200">
+                                        Your prescription is ready for pickup at the pharmacy.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {prescription.status?.toUpperCase() === 'PROCESSING' && (
+                                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-blue-600" />
+                                    <div>
+                                      <p className="font-semibold text-blue-900 dark:text-blue-100">Being Processed</p>
+                                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                                        Your prescription is currently being prepared at the pharmacy.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {prescription.status?.toUpperCase() === 'DELIVERED' && (
+                                <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200">
+                                  <div className="flex items-center gap-2">
+                                    <Truck className="h-5 w-5 text-purple-600" />
+                                    <div>
+                                      <p className="font-semibold text-purple-900 dark:text-purple-100">Delivered</p>
+                                      <p className="text-sm text-purple-800 dark:text-purple-200">
+                                        Your prescription has been delivered.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {prescription.status?.toUpperCase() === 'CANCELLED' && (
+                                <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200">
+                                  <div className="flex items-center gap-2">
+                                    <XCircle className="h-5 w-5 text-red-600" />
+                                    <div>
+                                      <p className="font-semibold text-red-900 dark:text-red-100">Prescription Cancelled</p>
+                                      <p className="text-sm text-red-800 dark:text-red-200">
+                                        This prescription was cancelled. Please contact your doctor for alternatives.
+                                      </p>
+                                    </div>
+                                  </div>
                                 </div>
                               )}
 

@@ -16,8 +16,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (identifier: string, password: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<User>;
+  register: (data: any) => Promise<User>;
   logout: () => void;
 }
 
@@ -47,19 +47,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (identifier: string, password: string) => {
-    const response = await api.post('/auth/login', { identifier, password });
-    const { access_token, user: userData } = response.data;
-    
-    localStorage.setItem('token', access_token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+  const login = async (identifier: string, password: string): Promise<User> => {
+    try {
+      const response = await api.post('/auth/login', { identifier, password });
+      const { access_token, user: userData } = response.data;
+      
+      console.log('Login response:', { access_token: access_token ? 'received' : 'missing', user: userData });
+      
+      if (!access_token || !userData) {
+        throw new Error('Invalid login response');
+      }
+      
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      
+      console.log('User stored:', userData);
+      return userData;
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
-  const register = async (data: any) => {
+  const register = async (data: any): Promise<User> => {
     await api.post('/auth/register', data);
     // Auto login after registration
-    await login(data.email || data.phone || data.nationalId, data.password);
+    return await login(data.email || data.phone || data.nationalId, data.password);
   };
 
   const logout = () => {

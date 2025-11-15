@@ -11,18 +11,15 @@ import {
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from '../users/schemas/user.schema';
-import { Prescription } from '../prescriptions/schemas/prescription.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserRole, PrescriptionStatus } from '@prisma/client';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
-    @InjectModel('User') private userModel: Model<User>,
-    @InjectModel('Prescription') private prescriptionModel: Model<Prescription>,
+    private prisma: PrismaService,
   ) {}
 
   @Get('conversation')
@@ -49,48 +46,58 @@ export class ChatController {
     const userRole = req.user.role;
     const contacts: any[] = [];
 
-    if (userRole === 'pharmacy') {
-      // For pharmacy: get doctors from prescriptions assigned to this pharmacy
-      const prescriptions = await this.prescriptionModel
-        .find({
-          $or: [
+    if (userRole === UserRole.PHARMACY) {
+      const prescriptions = await this.prisma.prescription.findMany({
+        where: {
+          OR: [
             { pharmacyId: userId },
-            { status: { $in: ['pending', 'processing'] } },
+            { status: { in: [PrescriptionStatus.PENDING, PrescriptionStatus.PROCESSING] } },
           ],
-        })
-        .populate('doctorId', 'firstName lastName email role')
-        .populate('patientId', 'firstName lastName email')
-        .exec();
+        },
+        include: {
+          doctor: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              role: true,
+            },
+          },
+          patient: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      });
 
-      // Get unique doctor IDs
       const doctorIds = [...new Set(
         prescriptions
-          .map((p: any) => {
-            if (p.doctorId && typeof p.doctorId === 'object' && p.doctorId._id) {
-              return p.doctorId._id.toString();
-            }
-            if (p.doctorId && typeof p.doctorId === 'string') {
-              return p.doctorId;
-            }
-            return null;
-          })
+          .map(p => p.doctorId)
           .filter(Boolean)
       )];
       
       for (const doctorId of doctorIds) {
-        const doctor = await this.userModel.findById(doctorId);
-        if (doctor && doctor.role === 'doctor') {
-          // Get prescription count for this doctor
-          const prescriptionCount = await this.prescriptionModel.countDocuments({
-            doctorId: doctor._id,
-            $or: [
-              { pharmacyId: userId },
-              { status: { $in: ['pending', 'processing'] } },
-            ],
+        const doctor = await this.prisma.user.findUnique({
+          where: { id: doctorId! },
+        });
+        if (doctor && doctor.role === UserRole.DOCTOR) {
+          const prescriptionCount = await this.prisma.prescription.count({
+            where: {
+              doctorId: doctor.id,
+              OR: [
+                { pharmacyId: userId },
+                { status: { in: [PrescriptionStatus.PENDING, PrescriptionStatus.PROCESSING] } },
+              ],
+            },
           });
 
           contacts.push({
-            _id: doctor._id,
+            id: doctor.id,
             firstName: doctor.firstName,
             lastName: doctor.lastName,
             email: doctor.email,
@@ -99,31 +106,43 @@ export class ChatController {
           });
         }
       }
-    } else if (userRole === 'patient') {
-      // For patients: get doctors and analysts from appointments and prescriptions
-      const [appointments, prescriptions] = await Promise.all([
-        this.userModel.find({ role: { $in: ['doctor', 'analyst'] } }).limit(10).exec(),
-        this.prescriptionModel.find({ patientId: userId }).populate('doctorId', 'firstName lastName email').exec(),
+    } else if (userRole === UserRole.PATIENT) {
+      const [doctors, prescriptions] = await Promise.all([
+        this.prisma.user.findMany({
+          where: { role: { in: [UserRole.DOCTOR, UserRole.ANALYST] } },
+          take: 10,
+        }),
+        this.prisma.prescription.findMany({
+          where: { patientId: userId },
+          include: {
+            doctor: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        }),
       ]);
 
-      // Add doctors from prescriptions
-      prescriptions.forEach((prescription: any) => {
-        if (prescription.doctorId && !contacts.find(c => c._id.toString() === prescription.doctorId._id.toString())) {
+      prescriptions.forEach((prescription) => {
+        if (prescription.doctor && !contacts.find(c => c.id === prescription.doctor!.id)) {
           contacts.push({
-            _id: prescription.doctorId._id,
-            firstName: prescription.doctorId.firstName,
-            lastName: prescription.doctorId.lastName,
-            email: prescription.doctorId.email,
-            role: 'doctor',
+            id: prescription.doctor.id,
+            firstName: prescription.doctor.firstName,
+            lastName: prescription.doctor.lastName,
+            email: prescription.doctor.email,
+            role: UserRole.DOCTOR,
           });
         }
       });
 
-      // Add doctors and analysts from appointments
-      appointments.forEach((user: any) => {
-        if (!contacts.find(c => c._id.toString() === user._id.toString())) {
+      doctors.forEach((user) => {
+        if (!contacts.find(c => c.id === user.id)) {
           contacts.push({
-            _id: user._id,
+            id: user.id,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
@@ -131,29 +150,37 @@ export class ChatController {
           });
         }
       });
-    } else if (userRole === 'doctor') {
-      // For doctors: get patients from prescriptions
-      const prescriptions = await this.prescriptionModel
-        .find({ doctorId: userId })
-        .populate('patientId', 'firstName lastName email')
-        .exec();
+    } else if (userRole === UserRole.DOCTOR) {
+      const prescriptions = await this.prisma.prescription.findMany({
+        where: { doctorId: userId },
+        include: {
+          patient: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+        },
+      });
 
-      prescriptions.forEach((prescription: any) => {
-        const patientId = prescription.patientId?._id || prescription.patientId;
-        if (patientId && !contacts.find(c => c._id.toString() === patientId.toString())) {
+      prescriptions.forEach((prescription) => {
+        const patientId = prescription.patientId;
+        if (patientId && !contacts.find(c => c.id === patientId)) {
           contacts.push({
-            _id: patientId,
-            firstName: prescription.patientId?.firstName || '',
-            lastName: prescription.patientId?.lastName || '',
-            email: prescription.patientId?.email || '',
-            role: 'patient',
+            id: prescription.patient.id,
+            firstName: prescription.patient.firstName,
+            lastName: prescription.patient.lastName,
+            email: prescription.patient.email,
+            role: UserRole.PATIENT,
           });
         }
       });
     }
 
     return {
-      contacts: contacts.filter(c => c._id.toString() !== userId),
+      contacts: contacts.filter(c => c.id !== userId),
       message: `Found ${contacts.length} contacts`,
     };
   }
@@ -163,4 +190,3 @@ export class ChatController {
     return this.chatService.markAsRead(id);
   }
 }
-

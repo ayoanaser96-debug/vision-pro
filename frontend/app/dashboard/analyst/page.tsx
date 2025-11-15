@@ -28,7 +28,8 @@ export default function AnalystDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (!loading && !['analyst', 'admin'].includes(user?.role || '')) {
+    const normalizedRole = user?.role?.toUpperCase() || '';
+    if (!loading && !['ANALYST', 'ADMIN'].includes(normalizedRole)) {
       router.push('/login');
     }
   }, [user, loading, router]);

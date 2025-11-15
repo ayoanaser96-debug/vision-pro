@@ -44,10 +44,10 @@ interface PatientJourney {
 }
 
 const stepConfig: Record<string, { title: string; icon: any; roles: string[] }> = {
-  payment: { title: 'Payment', icon: CreditCard, roles: ['admin'] },
-  analyst: { title: 'Analyst', icon: TestTube, roles: ['admin', 'analyst'] },
-  doctor: { title: 'Doctor', icon: Stethoscope, roles: ['admin', 'doctor'] },
-  pharmacy: { title: 'Pharmacy', icon: Pill, roles: ['admin', 'pharmacy'] },
+  payment: { title: 'Payment', icon: CreditCard, roles: ['ADMIN'] },
+  analyst: { title: 'Analyst', icon: TestTube, roles: ['ADMIN', 'ANALYST'] },
+  doctor: { title: 'Doctor', icon: Stethoscope, roles: ['ADMIN', 'DOCTOR'] },
+  pharmacy: { title: 'Pharmacy', icon: Pill, roles: ['ADMIN', 'PHARMACY'] },
 };
 
 export default function AdminJourneyPage() {
@@ -59,7 +59,8 @@ export default function AdminJourneyPage() {
   const [markingComplete, setMarkingComplete] = useState<string>('');
 
   useEffect(() => {
-    if (!authLoading && !['admin', 'analyst', 'doctor', 'pharmacy'].includes(user?.role || '')) {
+    const normalizedRole = user?.role?.toUpperCase() || '';
+    if (!authLoading && !['ADMIN', 'ANALYST', 'DOCTOR', 'PHARMACY'].includes(normalizedRole)) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
@@ -115,7 +116,8 @@ export default function AdminJourneyPage() {
     if (!user) return false;
     const config = stepConfig[stepKey];
     if (!config) return false;
-    return config.roles.includes(user.role) || user.role === 'admin';
+    const normalizedRole = user.role?.toUpperCase() || '';
+    return config.roles.includes(normalizedRole) || normalizedRole === 'ADMIN';
   };
 
   if (authLoading || loading) {

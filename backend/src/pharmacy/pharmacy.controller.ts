@@ -154,4 +154,28 @@ export class PharmacyController {
       days ? parseInt(days.toString()) : 30,
     );
   }
+
+  // Check prescription item availability
+  @Get('prescriptions/:id/check-availability')
+  async checkPrescriptionAvailability(@Param('id') id: string, @Request() req) {
+    return this.pharmacyEnhancedService.checkPrescriptionAvailability(
+      id,
+      req.user.role === 'admin' ? undefined : req.user.id,
+    );
+  }
+
+  // Reject/Return prescription with missing items
+  @Post('prescriptions/:id/reject')
+  async rejectPrescription(
+    @Param('id') id: string,
+    @Body() body: { reason: string; missingItems: string[] },
+    @Request() req,
+  ) {
+    return this.pharmacyEnhancedService.rejectPrescription(
+      id,
+      body.reason,
+      body.missingItems,
+      req.user.role === 'admin' ? undefined : req.user.id,
+    );
+  }
 }

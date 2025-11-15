@@ -18,8 +18,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Admin',
       lastName: 'User',
-      role: 'admin',
-      status: 'active',
+      role: 'ADMIN',
+      status: 'ACTIVE',
       emailVerified: true,
     },
   });
@@ -34,8 +34,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Dr. Sarah',
       lastName: 'Johnson',
-      role: 'doctor',
-      status: 'active',
+      role: 'DOCTOR',
+      status: 'ACTIVE',
       specialty: 'Ophthalmology',
       emailVerified: true,
     },
@@ -49,8 +49,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Dr. Noor',
       lastName: 'Al-Rahman',
-      role: 'doctor',
-      status: 'active',
+      role: 'DOCTOR',
+      status: 'ACTIVE',
       specialty: 'Retinal Specialist',
       emailVerified: true,
     },
@@ -66,8 +66,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Ahmed',
       lastName: 'Hassan',
-      role: 'analyst',
-      status: 'active',
+      role: 'ANALYST',
+      status: 'ACTIVE',
       emailVerified: true,
     },
   });
@@ -82,8 +82,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Main',
       lastName: 'Pharmacy',
-      role: 'pharmacy',
-      status: 'active',
+      role: 'PHARMACY',
+      status: 'ACTIVE',
       emailVerified: true,
     },
   });
@@ -98,8 +98,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Ahmed',
       lastName: 'Ali',
-      role: 'patient',
-      status: 'active',
+      role: 'PATIENT',
+      status: 'ACTIVE',
       phone: '+1234567890',
       dateOfBirth: new Date('1985-05-15'),
       address: '123 Main St, City',
@@ -115,8 +115,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Fatima',
       lastName: 'Hassan',
-      role: 'patient',
-      status: 'active',
+      role: 'PATIENT',
+      status: 'ACTIVE',
       phone: '+1234567891',
       dateOfBirth: new Date('1990-08-20'),
       address: '456 Oak Ave, City',
@@ -132,8 +132,8 @@ async function main() {
       password: hashedPassword,
       firstName: 'Omar',
       lastName: 'Khalil',
-      role: 'patient',
-      status: 'active',
+      role: 'PATIENT',
+      status: 'ACTIVE',
       phone: '+1234567892',
       dateOfBirth: new Date('1978-03-10'),
       address: '789 Pine Rd, City',
@@ -148,12 +148,12 @@ async function main() {
     update: {},
     create: {
       userId: patient1User.id,
-      allergies: JSON.stringify(['Penicillin', 'Dust']),
-      chronicConditions: JSON.stringify(['Hypertension', 'Diabetes Type 2']),
-      medications: JSON.stringify(['Metformin 500mg', 'Lisinopril 10mg']),
-      emergencyContacts: JSON.stringify([
+      allergies: ['Penicillin', 'Dust'],
+      chronicConditions: ['Hypertension', 'Diabetes Type 2'],
+      medications: ['Metformin 500mg', 'Lisinopril 10mg'],
+      emergencyContacts: [
         { name: 'Sara Ali', relationship: 'Wife', phone: '+1234567893' },
-      ]),
+      ],
     },
   });
 
@@ -162,12 +162,12 @@ async function main() {
     update: {},
     create: {
       userId: patient2User.id,
-      allergies: JSON.stringify([]),
-      chronicConditions: JSON.stringify([]),
-      medications: JSON.stringify([]),
-      emergencyContacts: JSON.stringify([
+      allergies: [],
+      chronicConditions: [],
+      medications: [],
+      emergencyContacts: [
         { name: 'Hassan Ibrahim', relationship: 'Father', phone: '+1234567894' },
-      ]),
+      ],
     },
   });
 
@@ -176,12 +176,12 @@ async function main() {
     update: {},
     create: {
       userId: patient3User.id,
-      allergies: JSON.stringify(['Sulfa drugs']),
-      chronicConditions: JSON.stringify(['Glaucoma']),
-      medications: JSON.stringify(['Timolol eye drops']),
-      emergencyContacts: JSON.stringify([
+      allergies: ['Sulfa drugs'],
+      chronicConditions: ['Glaucoma'],
+      medications: ['Timolol eye drops'],
+      emergencyContacts: [
         { name: 'Layla Khalil', relationship: 'Daughter', phone: '+1234567895' },
-      ]),
+      ],
     },
   });
   console.log('✅ Created patient records');
@@ -197,7 +197,7 @@ async function main() {
       appointmentDate: tomorrow,
       appointmentTime: '10:00 AM',
       reason: 'Routine eye examination',
-      status: 'confirmed',
+      status: 'CONFIRMED',
       notes: 'Patient reports blurry vision',
     },
   });
@@ -209,7 +209,7 @@ async function main() {
       appointmentDate: tomorrow,
       appointmentTime: '2:30 PM',
       reason: 'Follow-up consultation',
-      status: 'pending',
+      status: 'PENDING',
     },
   });
   console.log('✅ Created appointments');
@@ -220,19 +220,13 @@ async function main() {
       patientId: patient1User.id,
       analystId: analyst1.id,
       doctorId: doctor1.id,
-      testType: 'Comprehensive Eye Exam',
       visualAcuityRight: '20/40',
       visualAcuityLeft: '20/30',
-      intraocularpressureRight: 18.5,
-      intraocularpressureLeft: 17.2,
-      colorVision: 'Normal',
-      fieldOfVision: 'Full',
-      refraction: JSON.stringify({
-        right: { sphere: -2.25, cylinder: -0.5, axis: 180 },
-        left: { sphere: -2.0, cylinder: -0.75, axis: 175 },
-      }),
+      refractionRight: { sphere: -2.25, cylinder: -0.5, axis: 180 },
+      refractionLeft: { sphere: -2.0, cylinder: -0.75, axis: 175 },
+      retinaImages: [],
       analystNotes: 'Mild myopia detected',
-      status: 'completed',
+      status: 'COMPLETED',
     },
   });
   console.log('✅ Created eye tests');
@@ -242,22 +236,21 @@ async function main() {
     data: {
       patientId: patient1User.id,
       doctorId: doctor1.id,
-      medications: JSON.stringify([
+      medications: [
         {
           name: 'Artificial Tears',
           dosage: '1 drop',
           frequency: '4 times daily',
           duration: '30 days',
         },
-      ]),
-      glasses: JSON.stringify({
+      ],
+      glasses: {
         right: { sphere: -2.25, cylinder: -0.5, axis: 180 },
         left: { sphere: -2.0, cylinder: -0.75, axis: 175 },
         type: 'Progressive lenses',
-      }),
-      instructions: 'Use artificial tears regularly. Wear glasses for all activities.',
-      status: 'approved',
-      validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      },
+      notes: 'Use artificial tears regularly. Wear glasses for all activities.',
+      status: 'FILLED',
     },
   });
   console.log('✅ Created prescriptions');
@@ -266,14 +259,14 @@ async function main() {
   await prisma.case.create({
     data: {
       patientId: patient1User.id,
-      doctorId: doctor1.id,
-      title: 'Progressive Myopia',
-      description: 'Patient experiencing worsening near-sightedness',
+      assignedDoctors: {
+        connect: { id: doctor1.id },
+      },
       diagnosis: 'Myopia progression',
-      symptoms: JSON.stringify(['Blurry distance vision', 'Eye strain', 'Headaches']),
-      status: 'in_progress',
-      priority: 'medium',
+      timeline: [],
       notes: 'Consider orthokeratology for myopia control',
+      status: 'IN_PROGRESS',
+      priority: 'MEDIUM',
     },
   });
   console.log('✅ Created cases');
@@ -284,8 +277,8 @@ async function main() {
       userId: patient1User.id,
       title: 'Appointment Reminder',
       message: 'Your appointment with Dr. Sarah Johnson is tomorrow at 10:00 AM',
-      type: 'appointment',
-      priority: 'high',
+      type: 'FOLLOW_UP_REMINDER',
+      priority: 'HIGH',
     },
   });
 
@@ -294,30 +287,34 @@ async function main() {
       userId: doctor1.id,
       title: 'New Test Results',
       message: 'Eye test results for Ahmed Ali are ready for review',
-      type: 'test_result',
-      priority: 'medium',
+      type: 'ABNORMAL_FINDING',
+      priority: 'MEDIUM',
     },
   });
   console.log('✅ Created notifications');
 
   // Create System Settings
   await prisma.systemSettings.upsert({
-    where: { key: 'clinic_name' },
+    where: { settingsKey: 'clinic_name' },
     update: {},
     create: {
-      key: 'clinic_name',
-      value: JSON.stringify('Vision Smart Clinic'),
-      category: 'general',
+      settingsKey: 'clinic_name',
+      currency: 'USD',
+      language: 'en',
+      theme: 'light',
+      otherSettings: { value: 'Vision Smart Clinic' },
     },
   });
 
   await prisma.systemSettings.upsert({
-    where: { key: 'offline_mode' },
+    where: { settingsKey: 'offline_mode' },
     update: {},
     create: {
-      key: 'offline_mode',
-      value: JSON.stringify(true),
-      category: 'system',
+      settingsKey: 'offline_mode',
+      currency: 'USD',
+      language: 'en',
+      theme: 'light',
+      otherSettings: { enabled: true },
     },
   });
   console.log('✅ Created system settings');

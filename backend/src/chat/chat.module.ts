@@ -3,20 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { ChatGateway } from './chat.gateway';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ChatMessage, ChatMessageSchema } from './schemas/chat-message.schema';
-import { User, UserSchema } from '../users/schemas/user.schema';
-import { Prescription, PrescriptionSchema } from '../prescriptions/schemas/prescription.schema';
+import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: ChatMessage.name, schema: ChatMessageSchema },
-      { name: User.name, schema: UserSchema },
-      { name: Prescription.name, schema: PrescriptionSchema },
-    ]),
+    PrismaModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

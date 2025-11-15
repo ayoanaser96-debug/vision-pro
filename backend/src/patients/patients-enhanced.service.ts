@@ -1,50 +1,57 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../users/schemas/user.schema';
-import { Appointment, AppointmentDocument } from '../appointments/schemas/appointment.schema';
-import { EyeTest, EyeTestDocument } from '../eye-tests/schemas/eye-test.schema';
-import { Prescription, PrescriptionDocument } from '../prescriptions/schemas/prescription.schema';
-import { Case, CaseDocument } from '../cases/schemas/case.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserRole, AppointmentStatus, PrescriptionStatus, CaseStatus, CasePriority } from '@prisma/client';
 
 @Injectable()
 export class PatientsEnhancedService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Appointment.name) private appointmentModel: Model<AppointmentDocument>,
-    @InjectModel(EyeTest.name) private eyeTestModel: Model<EyeTestDocument>,
-    @InjectModel(Prescription.name) private prescriptionModel: Model<PrescriptionDocument>,
-    @InjectModel(Case.name) private caseModel: Model<CaseDocument>,
+    private prisma: PrismaService,
   ) {}
 
   // 1. Unified Medical Journey
   async getUnifiedMedicalJourney(patientId: string) {
     const [appointments, tests, prescriptions, cases] = await Promise.all([
-      this.appointmentModel.find({ patientId }).populate('doctorId').sort({ appointmentDate: -1 }).lean(),
-      this.eyeTestModel.find({ patientId }).populate('doctorId').populate('analystId').sort({ createdAt: -1 }).lean(),
-      this.prescriptionModel.find({ patientId }).populate('doctorId').populate('pharmacyId').sort({ createdAt: -1 }).lean(),
-      this.caseModel.find({ patientId }).populate('assignedDoctors').sort({ createdAt: -1 }).lean(),
+      this.prisma.appointment.findMany({
+        where: { patientId },
+        include: { doctor: true },
+        orderBy: { appointmentDate: 'desc' },
+      }),
+      this.prisma.eyeTest.findMany({
+        where: { patientId },
+        include: { doctor: true, analyst: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.prescription.findMany({
+        where: { patientId },
+        include: { doctor: true, pharmacy: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.case.findMany({
+        where: { patientId },
+        include: { assignedDoctors: true },
+        orderBy: { createdAt: 'desc' },
+      }),
     ]);
 
     // Create unified timeline
     const timeline: any[] = [];
 
-    appointments.forEach((apt: any) => {
+    appointments.forEach((apt) => {
       timeline.push({
         type: 'appointment',
-        id: apt._id,
+        id: apt.id,
         date: apt.appointmentDate,
-        title: `Appointment with Dr. ${apt.doctorId?.firstName} ${apt.doctorId?.lastName}`,
+        title: `Appointment with Dr. ${apt.doctor?.firstName || ''} ${apt.doctor?.lastName || ''}`,
         description: apt.notes || `Status: ${apt.status}`,
         status: apt.status,
         data: apt,
       });
     });
 
-    tests.forEach((test: any) => {
+    tests.forEach((test) => {
       timeline.push({
         type: 'test',
-        id: test._id,
+        id: test.id,
         date: test.createdAt,
         title: 'Eye Test Result',
         description: `Status: ${test.status} • AI Analysis: ${test.aiAnalysis ? 'Available' : 'Pending'}`,
@@ -53,22 +60,23 @@ export class PatientsEnhancedService {
       });
     });
 
-    prescriptions.forEach((pres: any) => {
+    prescriptions.forEach((pres) => {
+      const medications = pres.medications as any[];
       timeline.push({
         type: 'prescription',
-        id: pres._id,
+        id: pres.id,
         date: pres.createdAt,
-        title: `Prescription from Dr. ${pres.doctorId?.firstName} ${pres.doctorId?.lastName}`,
-        description: `Status: ${pres.status} • ${pres.medications?.length || 0} medications`,
+        title: `Prescription from Dr. ${pres.doctor?.firstName || ''} ${pres.doctor?.lastName || ''}`,
+        description: `Status: ${pres.status} • ${medications?.length || 0} medications`,
         status: pres.status,
         data: pres,
       });
     });
 
-    cases.forEach((caseItem: any) => {
+    cases.forEach((caseItem) => {
       timeline.push({
         type: 'case',
-        id: caseItem._id,
+        id: caseItem.id,
         date: caseItem.createdAt,
         title: `Case: ${caseItem.diagnosis || 'Eye Care'}`,
         description: `Priority: ${caseItem.priority} • Status: ${caseItem.status}`,
@@ -87,11 +95,11 @@ export class PatientsEnhancedService {
         totalTests: tests.length,
         totalPrescriptions: prescriptions.length,
         totalCases: cases.length,
-        upcomingAppointments: appointments.filter((apt: any) => 
-          new Date(apt.appointmentDate) > new Date() && apt.status === 'scheduled'
+        upcomingAppointments: appointments.filter((apt) => 
+          new Date(apt.appointmentDate) > new Date() && apt.status === AppointmentStatus.CONFIRMED
         ).length,
-        pendingPrescriptions: prescriptions.filter((pres: any) => pres.status === 'pending').length,
-        activeCases: cases.filter((c: any) => c.status !== 'closed').length,
+        pendingPrescriptions: prescriptions.filter((pres) => pres.status === PrescriptionStatus.PENDING).length,
+        activeCases: cases.filter((c) => c.status !== CaseStatus.CLOSED).length,
       },
     };
   }
@@ -99,13 +107,17 @@ export class PatientsEnhancedService {
   // 2. Smart Appointment Booking
   async getSuggestedAppointments(patientId: string, urgency?: string, condition?: string) {
     // Get available doctors
-    const doctors = await this.userModel.find({ role: 'doctor', status: 'active' }).lean();
+    const doctors = await this.prisma.user.findMany({
+      where: { role: UserRole.DOCTOR, status: 'ACTIVE' },
+    });
     
     // Get existing appointments to find gaps
-    const existingAppointments = await this.appointmentModel.find({
-      appointmentDate: { $gte: new Date() },
-      status: { $in: ['scheduled', 'confirmed'] },
-    }).lean();
+    const existingAppointments = await this.prisma.appointment.findMany({
+      where: {
+        appointmentDate: { gte: new Date() },
+        status: { in: [AppointmentStatus.CONFIRMED] },
+      },
+    });
 
     const suggestions = [];
 
@@ -122,11 +134,11 @@ export class PatientsEnhancedService {
         const [hours, minutes] = slot.split(':');
         slotDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
         
-        const conflict = existingAppointments.some((apt: any) => {
+        const conflict = existingAppointments.some((apt) => {
           const aptDate = new Date(apt.appointmentDate);
           return aptDate.toDateString() === slotDateTime.toDateString() &&
                  apt.appointmentTime === slot &&
-                 apt.doctorId?.toString() === doctor._id.toString();
+                 apt.doctorId === doctor.id;
         });
         
         return !conflict;
@@ -134,7 +146,7 @@ export class PatientsEnhancedService {
 
       if (suggestedSlots.length > 0) {
         suggestions.push({
-          doctorId: doctor._id,
+          doctorId: doctor.id,
           doctorName: `${doctor.firstName} ${doctor.lastName}`,
           specialty: doctor.specialty,
           suggestedDate: suggestedDate.toISOString().split('T')[0],
@@ -152,20 +164,26 @@ export class PatientsEnhancedService {
   }
 
   async getWaitTimePrediction(appointmentId: string) {
-    const appointment = await this.appointmentModel.findById(appointmentId).populate('doctorId');
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: { doctor: true },
+    });
     if (!appointment) {
       throw new Error('Appointment not found');
     }
 
     // Calculate queue position
-    const queue = await this.appointmentModel.find({
-      doctorId: appointment.doctorId,
-      appointmentDate: appointment.appointmentDate,
-      appointmentTime: { $lte: appointment.appointmentTime },
-      status: { $in: ['scheduled', 'confirmed'] },
-    }).sort({ appointmentTime: 1 });
+    const queue = await this.prisma.appointment.findMany({
+      where: {
+        doctorId: appointment.doctorId,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: { lte: appointment.appointmentTime },
+        status: { in: [AppointmentStatus.CONFIRMED] },
+      },
+      orderBy: { appointmentTime: 'asc' },
+    });
 
-    const position = queue.findIndex((apt: any) => apt._id.toString() === appointmentId) + 1;
+    const position = queue.findIndex((apt) => apt.id === appointmentId) + 1;
     const avgWaitTime = 15; // 15 minutes per appointment
     const predictedWait = position * avgWaitTime;
 
@@ -179,15 +197,27 @@ export class PatientsEnhancedService {
   // 3. Health Records & Reports
   async getHealthTimeline(patientId: string) {
     const [tests, prescriptions, appointments] = await Promise.all([
-      this.eyeTestModel.find({ patientId }).sort({ createdAt: -1 }).lean(),
-      this.prescriptionModel.find({ patientId }).populate('doctorId').sort({ createdAt: -1 }).lean(),
-      this.appointmentModel.find({ patientId }).populate('doctorId').sort({ appointmentDate: -1 }).lean(),
+      this.prisma.eyeTest.findMany({
+        where: { patientId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.prescription.findMany({
+        where: { patientId },
+        include: { doctor: true, pharmacy: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.appointment.findMany({
+        where: { patientId },
+        include: { doctor: true },
+        orderBy: { appointmentDate: 'desc' },
+      }),
     ]);
 
     const timeline: any[] = [];
 
     // Add test results
-    tests.forEach((test: any) => {
+    tests.forEach((test) => {
+      const retinaImages = test.retinaImages as any;
       timeline.push({
         type: 'test',
         date: test.createdAt,
@@ -199,12 +229,12 @@ export class PatientsEnhancedService {
         },
         doctorNotes: test.doctorNotes,
         analystNotes: test.analystNotes,
-        images: test.retinaImages || [],
+        images: Array.isArray(retinaImages) ? retinaImages : [],
       });
     });
 
     // Add prescriptions
-    prescriptions.forEach((pres: any) => {
+    prescriptions.forEach((pres) => {
       timeline.push({
         type: 'prescription',
         date: pres.createdAt,
@@ -215,13 +245,13 @@ export class PatientsEnhancedService {
           notes: pres.notes,
           status: pres.status,
         },
-        doctor: pres.doctorId,
-        pharmacy: pres.pharmacyId,
+        doctor: pres.doctor,
+        pharmacy: pres.pharmacy,
       });
     });
 
     // Add appointments
-    appointments.forEach((apt: any) => {
+    appointments.forEach((apt) => {
       timeline.push({
         type: 'appointment',
         date: apt.appointmentDate,
@@ -231,7 +261,7 @@ export class PatientsEnhancedService {
           notes: apt.notes,
           time: apt.appointmentTime,
         },
-        doctor: apt.doctorId,
+        doctor: apt.doctor,
       });
     });
 
@@ -242,26 +272,33 @@ export class PatientsEnhancedService {
   }
 
   async getComparativeAnalysis(patientId: string, testId?: string) {
-    const tests = await this.eyeTestModel.find({ patientId }).sort({ createdAt: 1 }).lean();
+    const tests = await this.prisma.eyeTest.findMany({
+      where: { patientId },
+      orderBy: { createdAt: 'asc' },
+    });
     
     if (tests.length < 2) {
       return { message: 'Need at least 2 tests for comparison' };
     }
 
-    const latestTest = testId ? tests.find((t: any) => t._id.toString() === testId) : tests[tests.length - 1];
+    const latestTest = testId ? tests.find((t) => t.id === testId) : tests[tests.length - 1];
     const previousTest = tests[tests.length - 2];
+
+    if (!latestTest || !previousTest) {
+      return { message: 'Test not found' };
+    }
 
     const comparison: any = {
       visualAcuity: {
         right: {
           previous: previousTest.visualAcuityRight || 'N/A',
           current: latestTest.visualAcuityRight || 'N/A',
-          change: this.calculateChange(previousTest.visualAcuityRight, latestTest.visualAcuityRight),
+          change: this.calculateChange(previousTest.visualAcuityRight || '', latestTest.visualAcuityRight || ''),
         },
         left: {
           previous: previousTest.visualAcuityLeft || 'N/A',
           current: latestTest.visualAcuityLeft || 'N/A',
-          change: this.calculateChange(previousTest.visualAcuityLeft, latestTest.visualAcuityLeft),
+          change: this.calculateChange(previousTest.visualAcuityLeft || '', latestTest.visualAcuityLeft || ''),
         },
       },
       aiAnalysis: {
@@ -292,14 +329,14 @@ export class PatientsEnhancedService {
     if (tests.length >= 3) {
       // Analyze if vision is improving or declining
       const latest = tests[tests.length - 1];
-      const middle = tests[Math.floor(tests.length / 2)];
       
       // Simplified trend analysis
       if (latest.aiAnalysis) {
+        const analysis = latest.aiAnalysis as any;
         const risks = [];
-        if (latest.aiAnalysis.cataract?.detected) risks.push('cataract');
-        if (latest.aiAnalysis.glaucoma?.detected) risks.push('glaucoma');
-        if (latest.aiAnalysis.diabeticRetinopathy?.detected) risks.push('diabetic_retinopathy');
+        if (analysis.cataract?.detected) risks.push('cataract');
+        if (analysis.glaucoma?.detected) risks.push('glaucoma');
+        if (analysis.diabeticRetinopathy?.detected) risks.push('diabetic_retinopathy');
         
         trends.riskLevel = risks.length > 0 ? 'high' : 'low';
         trends.recommendations = [
@@ -314,9 +351,19 @@ export class PatientsEnhancedService {
 
   // 4. AI Insights & Self-Monitoring
   async getAIInsights(patientId: string) {
-    const tests = await this.eyeTestModel.find({ patientId }).sort({ createdAt: -1 }).lean();
-    const prescriptions = await this.prescriptionModel.find({ patientId }).sort({ createdAt: -1 }).lean();
-    const cases = await this.caseModel.find({ patientId }).lean();
+    const [tests, prescriptions, cases] = await Promise.all([
+      this.prisma.eyeTest.findMany({
+        where: { patientId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.prescription.findMany({
+        where: { patientId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.case.findMany({
+        where: { patientId },
+      }),
+    ]);
 
     const insights: any = {
       healthSummary: '',
@@ -330,7 +377,7 @@ export class PatientsEnhancedService {
       
       // Generate simple health summary
       if (latestTest.aiAnalysis) {
-        const analysis = latestTest.aiAnalysis;
+        const analysis = latestTest.aiAnalysis as any;
         const findings: string[] = [];
         
         if (analysis.cataract?.detected) {
@@ -369,17 +416,19 @@ export class PatientsEnhancedService {
 
     // Next steps
     if (prescriptions.length > 0) {
-      const pendingPrescriptions = prescriptions.filter((p: any) => p.status === 'pending');
+      const pendingPrescriptions = prescriptions.filter((p) => p.status === PrescriptionStatus.PENDING);
       if (pendingPrescriptions.length > 0) {
         insights.nextSteps.push('Pick up pending prescriptions from pharmacy');
       }
     }
 
-    const upcomingAppointments = await this.appointmentModel.find({
-      patientId,
-      appointmentDate: { $gte: new Date() },
-      status: { $in: ['scheduled', 'confirmed'] },
-    }).countDocuments();
+    const upcomingAppointments = await this.prisma.appointment.count({
+      where: {
+        patientId,
+        appointmentDate: { gte: new Date() },
+        status: { in: [AppointmentStatus.CONFIRMED] },
+      },
+    });
 
     if (upcomingAppointments > 0) {
       insights.nextSteps.push(`You have ${upcomingAppointments} upcoming appointment(s)`);
@@ -392,16 +441,17 @@ export class PatientsEnhancedService {
     let score = 0;
 
     // Base risk score from test results
-    tests.forEach((test: any) => {
+    tests.forEach((test) => {
       if (test.aiAnalysis) {
-        if (test.aiAnalysis.cataract?.detected) score += 20;
-        if (test.aiAnalysis.glaucoma?.detected) score += 30;
-        if (test.aiAnalysis.diabeticRetinopathy?.detected) score += 40;
+        const analysis = test.aiAnalysis as any;
+        if (analysis.cataract?.detected) score += 20;
+        if (analysis.glaucoma?.detected) score += 30;
+        if (analysis.diabeticRetinopathy?.detected) score += 40;
       }
     });
 
     // Risk from active cases
-    const urgentCases = cases.filter((c: any) => c.priority === 'urgent');
+    const urgentCases = cases.filter((c) => c.priority === CasePriority.URGENT);
     score += urgentCases.length * 15;
 
     return Math.min(score, 100);
@@ -409,19 +459,22 @@ export class PatientsEnhancedService {
 
   // 5. Prescription Tracking
   async getPrescriptionTracking(patientId: string) {
-    const prescriptions = await this.prescriptionModel.find({ patientId })
-      .populate('doctorId')
-      .populate('pharmacyId')
-      .sort({ createdAt: -1 })
-      .lean();
+    const prescriptions = await this.prisma.prescription.findMany({
+      where: { patientId },
+      include: {
+        doctor: true,
+        pharmacy: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    return prescriptions.map((pres: any) => ({
+    return prescriptions.map((pres) => ({
       ...pres,
       tracking: {
         status: pres.status,
         statusHistory: [
           { status: 'created', date: pres.createdAt },
-          ...(pres.status !== 'pending' ? [{ status: pres.status, date: pres.updatedAt }] : []),
+          ...(pres.status !== PrescriptionStatus.PENDING ? [{ status: pres.status, date: pres.updatedAt }] : []),
         ],
         pharmacyStatus: pres.pharmacyId ? 'assigned' : 'pending',
         deliveryInfo: pres.deliveryInfo || null,
@@ -432,19 +485,28 @@ export class PatientsEnhancedService {
   // 6. Billing History
   async getBillingHistory(patientId: string) {
     const [appointments, prescriptions] = await Promise.all([
-      this.appointmentModel.find({ patientId, status: 'completed' }).lean(),
-      this.prescriptionModel.find({ patientId, status: { $in: ['filled', 'completed'] } }).lean(),
+      this.prisma.appointment.findMany({
+        where: { patientId, status: AppointmentStatus.COMPLETED },
+        include: { doctor: true },
+      }),
+      this.prisma.prescription.findMany({
+        where: { 
+          patientId, 
+          status: { in: [PrescriptionStatus.FILLED, PrescriptionStatus.COMPLETED] },
+        },
+        include: { doctor: true },
+      }),
     ]);
 
     const invoices = [];
 
     // Appointment invoices
-    appointments.forEach((apt: any) => {
+    appointments.forEach((apt) => {
       invoices.push({
         type: 'appointment',
-        id: apt._id,
+        id: apt.id,
         date: apt.appointmentDate,
-        description: `Consultation with Dr. ${apt.doctorId?.firstName || 'Doctor'}`,
+        description: `Consultation with Dr. ${apt.doctor?.firstName || 'Doctor'}`,
         amount: 100, // Default consultation fee
         status: 'paid',
         items: [
@@ -454,21 +516,23 @@ export class PatientsEnhancedService {
     });
 
     // Prescription invoices
-    prescriptions.forEach((pres: any) => {
-      const medicationCost = (pres.medications?.length || 0) * 25; // $25 per medication
-      const glassesCost = (pres.glasses?.length || 0) * 150; // $150 per glasses
+    prescriptions.forEach((pres) => {
+      const medications = pres.medications as any[];
+      const glasses = pres.glasses as any[];
+      const medicationCost = (medications?.length || 0) * 25; // $25 per medication
+      const glassesCost = (Array.isArray(glasses) ? glasses.length : 0) * 150; // $150 per glasses
       const total = medicationCost + glassesCost;
 
       invoices.push({
         type: 'prescription',
-        id: pres._id,
+        id: pres.id,
         date: pres.createdAt,
-        description: `Prescription from Dr. ${pres.doctorId?.firstName || 'Doctor'}`,
+        description: `Prescription from Dr. ${pres.doctor?.firstName || 'Doctor'}`,
         amount: total,
-        status: pres.status === 'completed' ? 'paid' : 'pending',
+        status: pres.status === PrescriptionStatus.COMPLETED ? 'paid' : 'pending',
         items: [
-          ...(pres.medications?.map((med: any) => ({ name: med.name, price: 25 })) || []),
-          ...(pres.glasses?.map((glass: any) => ({ name: `${glass.type} - ${glass.lensType}`, price: 150 })) || []),
+          ...(medications?.map((med: any) => ({ name: med.name, price: 25 })) || []),
+          ...(Array.isArray(glasses) ? glasses.map((glass: any) => ({ name: `${glass.type} - ${glass.lensType}`, price: 150 })) : []),
         ],
       });
     });
@@ -493,13 +557,20 @@ export class PatientsEnhancedService {
   // 7. Health Dashboard Analytics
   async getHealthDashboard(patientId: string) {
     const [tests, prescriptions, appointments] = await Promise.all([
-      this.eyeTestModel.find({ patientId }).sort({ createdAt: 1 }).lean(),
-      this.prescriptionModel.find({ patientId }).lean(),
-      this.appointmentModel.find({ patientId }).lean(),
+      this.prisma.eyeTest.findMany({
+        where: { patientId },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.prescription.findMany({
+        where: { patientId },
+      }),
+      this.prisma.appointment.findMany({
+        where: { patientId },
+      }),
     ]);
 
     // Vision trends
-    const visionTrends = tests.map((test: any) => ({
+    const visionTrends = tests.map((test) => ({
       date: test.createdAt,
       visualAcuityRight: test.visualAcuityRight || 'N/A',
       visualAcuityLeft: test.visualAcuityLeft || 'N/A',
@@ -512,7 +583,7 @@ export class PatientsEnhancedService {
     const goals = {
       regularCheckups: {
         target: 4, // per year
-        current: appointments.filter((apt: any) => 
+        current: appointments.filter((apt) => 
           new Date(apt.appointmentDate).getFullYear() === new Date().getFullYear()
         ).length,
       },
@@ -536,41 +607,49 @@ export class PatientsEnhancedService {
   private calculateMedicationAdherence(prescriptions: any[]): number {
     // Simplified calculation - in production, this would track actual medication intake
     if (prescriptions.length === 0) return 0;
-    const completed = prescriptions.filter((p: any) => p.status === 'completed' || p.status === 'filled').length;
+    const completed = prescriptions.filter((p) => 
+      p.status === PrescriptionStatus.COMPLETED || p.status === PrescriptionStatus.FILLED
+    ).length;
     return Math.round((completed / prescriptions.length) * 100);
   }
 
   // 8. Final Results Summary (Doctor diagnosis, Analyst result, Pharmacy prescription)
   async getFinalResultsSummary(patientId: string) {
     const [latestTest, latestPrescription, latestCase] = await Promise.all([
-      this.eyeTestModel
-        .findOne({ patientId })
-        .populate('doctorId')
-        .populate('analystId')
-        .sort({ createdAt: -1 })
-        .lean(),
-      this.prescriptionModel
-        .findOne({ patientId })
-        .populate('doctorId')
-        .populate('pharmacyId')
-        .sort({ createdAt: -1 })
-        .lean(),
-      this.caseModel
-        .findOne({ patientId })
-        .populate('assignedDoctors')
-        .sort({ createdAt: -1 })
-        .lean(),
+      this.prisma.eyeTest.findFirst({
+        where: { patientId },
+        include: {
+          doctor: true,
+          analyst: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.prescription.findFirst({
+        where: { patientId },
+        include: {
+          doctor: true,
+          pharmacy: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.case.findFirst({
+        where: { patientId },
+        include: {
+          assignedDoctors: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
     ]);
 
     const analystSummary = latestTest
       ? {
-          testId: latestTest._id,
+          testId: latestTest.id,
           date: latestTest.createdAt,
-          analyst: latestTest.analystId && typeof latestTest.analystId === 'object' && 'firstName' in latestTest.analystId
-            ? `${(latestTest.analystId as any).firstName} ${(latestTest.analystId as any).lastName}`
+          analyst: latestTest.analyst
+            ? `${latestTest.analyst.firstName} ${latestTest.analyst.lastName}`
             : null,
-          doctor: latestTest.doctorId && typeof latestTest.doctorId === 'object' && 'firstName' in latestTest.doctorId
-            ? `${(latestTest.doctorId as any).firstName} ${(latestTest.doctorId as any).lastName}`
+          doctor: latestTest.doctor
+            ? `${latestTest.doctor.firstName} ${latestTest.doctor.lastName}`
             : null,
           status: latestTest.status,
           aiAnalysis: latestTest.aiAnalysis || null,
@@ -580,29 +659,26 @@ export class PatientsEnhancedService {
 
     const diagnosisSummary = latestCase
       ? {
-          caseId: latestCase._id,
+          caseId: latestCase.id,
           date: latestCase.createdAt,
           diagnosis: latestCase.diagnosis || null,
           status: latestCase.status,
           priority: latestCase.priority,
-          doctors:
-            Array.isArray(latestCase.assignedDoctors)
-              ? latestCase.assignedDoctors.map((d: any) => `${d.firstName} ${d.lastName}`)
-              : [],
+          doctors: latestCase.assignedDoctors.map((d) => `${d.firstName} ${d.lastName}`),
           notes: latestCase.notes || null,
         }
       : null;
 
     const prescriptionSummary = latestPrescription
       ? {
-          prescriptionId: latestPrescription._id,
+          prescriptionId: latestPrescription.id,
           date: latestPrescription.createdAt,
           status: latestPrescription.status,
-          doctor: latestPrescription.doctorId && typeof latestPrescription.doctorId === 'object' && 'firstName' in latestPrescription.doctorId
-            ? `${(latestPrescription.doctorId as any).firstName} ${(latestPrescription.doctorId as any).lastName}`
+          doctor: latestPrescription.doctor
+            ? `${latestPrescription.doctor.firstName} ${latestPrescription.doctor.lastName}`
             : null,
-          pharmacy: latestPrescription.pharmacyId && typeof latestPrescription.pharmacyId === 'object' && ('name' in latestPrescription.pharmacyId || 'firstName' in latestPrescription.pharmacyId)
-            ? `${(latestPrescription.pharmacyId as any).name || (latestPrescription.pharmacyId as any).firstName || ''}`.trim() || null
+          pharmacy: latestPrescription.pharmacy
+            ? `${latestPrescription.pharmacy.firstName} ${latestPrescription.pharmacy.lastName}`
             : null,
           medications: latestPrescription.medications || [],
           glasses: latestPrescription.glasses || [],
@@ -618,4 +694,3 @@ export class PatientsEnhancedService {
     };
   }
 }
-

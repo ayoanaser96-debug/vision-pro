@@ -82,7 +82,8 @@ export default function DoctorDashboard() {
   const [realTimeAlerts, setRealTimeAlerts] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!loading && !['doctor', 'admin'].includes(user?.role || '')) {
+    const normalizedRole = user?.role?.toUpperCase() || '';
+    if (!loading && !['DOCTOR', 'ADMIN'].includes(normalizedRole)) {
       router.push('/login');
     }
   }, [user, loading, router]);
@@ -1890,7 +1891,14 @@ export default function DoctorDashboard() {
                         variant="outline"
                         className="w-full"
                         onClick={() => {
-                          router.push(`/dashboard/patient/chat?patientId=${selectedCase.patientId?._id}`);
+                          if (selectedCase.patientId?._id) {
+                            router.push(`/dashboard/patient/chat?patientId=${selectedCase.patientId._id}`);
+                          } else {
+                            handleReplyToPatient(
+                              `${selectedCase.patientId?.firstName} ${selectedCase.patientId?.lastName}`,
+                              selectedCase.patientId?._id
+                            );
+                          }
                         }}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
@@ -1900,7 +1908,10 @@ export default function DoctorDashboard() {
                         variant="outline"
                         className="w-full"
                         onClick={() => {
-                          router.push(`/dashboard/doctor/appointments?patientId=${selectedCase.patientId?._id}`);
+                          handleScheduleAppointment(
+                            `${selectedCase.patientId?.firstName} ${selectedCase.patientId?.lastName}`,
+                            selectedCase.patientId?._id
+                          );
                         }}
                       >
                         <Calendar className="h-4 w-4 mr-2" />

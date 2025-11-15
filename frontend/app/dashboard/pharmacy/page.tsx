@@ -28,6 +28,9 @@ import {
   FileText,
   BarChart3,
   RefreshCw,
+  X,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 
 export default function PharmacyDashboard() {
@@ -42,6 +45,12 @@ export default function PharmacyDashboard() {
   const [loading, setLoading] = useState(false);
   const [showAddInventory, setShowAddInventory] = useState(false);
   const [showAddSupplier, setShowAddSupplier] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
+  const [availabilityData, setAvailabilityData] = useState<any>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [newInventoryItem, setNewInventoryItem] = useState({
     name: '',
     quantity: 0,
@@ -60,6 +69,14 @@ export default function PharmacyDashboard() {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Auto-refresh prescriptions every 30 seconds to show real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData();
+    }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
@@ -89,15 +106,24 @@ export default function PharmacyDashboard() {
 
   const handlePrescriptionStatusUpdate = async (prescriptionId: string, status: string) => {
     try {
-      await api.put(`/pharmacy/prescriptions/${prescriptionId}/status`, { status });
-      toast({ title: 'Success', description: `Prescription status updated to ${status}` });
-      loadData();
+      setLoading(true);
+      // Normalize status to uppercase for backend
+      const normalizedStatus = status.toUpperCase();
+      await api.put(`/pharmacy/prescriptions/${prescriptionId}/status`, { status: normalizedStatus });
+      toast({ 
+        title: 'Success', 
+        description: `Prescription status updated to ${status}. Patient and doctor have been notified.` 
+      });
+      await loadData();
     } catch (error: any) {
+      console.error('Error updating prescription status:', error);
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to update prescription status',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -204,6 +230,70 @@ export default function PharmacyDashboard() {
     });
   };
 
+  const handleCheckAvailability = async (prescription: any) => {
+    setSelectedPrescription(prescription);
+    setCheckingAvailability(true);
+    try {
+      const prescriptionId = prescription.id || prescription._id;
+      const response = await api.get(`/pharmacy/prescriptions/${prescriptionId}/check-availability`);
+      setAvailabilityData(response.data);
+      setShowAvailabilityModal(true);
+      
+      // If items are missing, show reject option
+      if (!response.data.allAvailable && response.data.missingItems.length > 0) {
+        // Auto-populate reject reason
+        const missingNames = response.data.missingItems.map((item: any) => item.name).join(', ');
+        setRejectReason(`Items not available in stock: ${missingNames}`);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to check availability',
+        variant: 'destructive',
+      });
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
+  const handleRejectPrescription = async () => {
+    if (!selectedPrescription || !rejectReason.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please provide a reason for rejection',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const prescriptionId = selectedPrescription.id || selectedPrescription._id;
+      const missingItems = availabilityData?.missingItems?.map((item: any) => item.name) || [];
+      await api.post(`/pharmacy/prescriptions/${prescriptionId}/reject`, {
+        reason: rejectReason,
+        missingItems: missingItems.length > 0 ? missingItems : ['Unknown items'],
+      });
+      
+      toast({
+        title: 'Success',
+        description: 'Prescription rejected and returned to doctor. Notifications sent.',
+      });
+      
+      setShowAvailabilityModal(false);
+      setShowRejectModal(false);
+      setSelectedPrescription(null);
+      setAvailabilityData(null);
+      setRejectReason('');
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to reject prescription',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -227,7 +317,7 @@ export default function PharmacyDashboard() {
               <Pill className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{prescriptions.filter(p => p.status === 'pending').length}</div>
+              <div className="text-2xl font-bold">{prescriptions.filter(p => p.status?.toUpperCase() === 'PENDING').length}</div>
               <p className="text-xs text-muted-foreground">Awaiting processing</p>
             </CardContent>
           </Card>
@@ -294,31 +384,41 @@ export default function PharmacyDashboard() {
                       <p>No prescriptions available</p>
                     </div>
                   ) : (
-                    prescriptions.map((prescription) => (
-                      <Card key={prescription._id} className="border-l-4 border-l-primary">
+                    prescriptions.map((prescription) => {
+                      const prescriptionId = prescription.id || prescription._id;
+                      const patient = prescription.patient || prescription.patientId;
+                      const doctor = prescription.doctor || prescription.doctorId;
+                      return (
+                      <Card key={prescriptionId} className="border-l-4 border-l-primary">
                         <CardContent className="pt-6">
                           <div className="flex items-start justify-between">
                             <div className="space-y-2 flex-1">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold">
-                                  {prescription.patientId?.firstName} {prescription.patientId?.lastName}
+                                  {patient?.firstName} {patient?.lastName}
                                 </h3>
                                 <Badge
                                   className={
-                                    prescription.status === 'pending'
+                                    prescription.status?.toUpperCase() === 'PENDING'
                                       ? 'bg-orange-500'
-                                      : prescription.status === 'processing'
+                                      : prescription.status?.toUpperCase() === 'PROCESSING'
                                       ? 'bg-blue-500'
-                                      : prescription.status === 'ready'
+                                      : prescription.status?.toUpperCase() === 'READY'
                                       ? 'bg-green-500'
+                                      : prescription.status?.toUpperCase() === 'DELIVERED'
+                                      ? 'bg-purple-500'
+                                      : prescription.status?.toUpperCase() === 'COMPLETED'
+                                      ? 'bg-emerald-500'
+                                      : prescription.status?.toUpperCase() === 'CANCELLED'
+                                      ? 'bg-red-500'
                                       : 'bg-gray-500'
                                   }
                                 >
-                                  {prescription.status}
+                                  {prescription.status?.toUpperCase() || 'UNKNOWN'}
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                Doctor: {prescription.doctorId?.firstName} {prescription.doctorId?.lastName}
+                                Doctor: {doctor?.firstName} {doctor?.lastName}
                               </p>
                               <div className="text-sm">
                                 <strong>Medications:</strong>
@@ -337,43 +437,99 @@ export default function PharmacyDashboard() {
                               )}
                             </div>
                             <div className="flex flex-col gap-2 ml-4">
-                              {prescription.status === 'pending' && (
+                              {(prescription.status?.toUpperCase() === 'PENDING' || !prescription.status) && (
                                 <Button
                                   size="sm"
-                                  onClick={() => handlePrescriptionStatusUpdate(prescription._id, 'processing')}
+                                  onClick={() => handlePrescriptionStatusUpdate(prescriptionId, 'processing')}
+                                  disabled={loading}
                                 >
                                   Start Processing
                                 </Button>
                               )}
-                              {prescription.status === 'processing' && (
+                              {prescription.status?.toUpperCase() === 'PROCESSING' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handlePrescriptionStatusUpdate(prescriptionId, 'ready')}
+                                    disabled={loading}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    Mark Ready
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handlePrescriptionStatusUpdate(prescriptionId, 'pending')}
+                                    disabled={loading}
+                                  >
+                                    Back to Pending
+                                  </Button>
+                                </>
+                              )}
+                              {prescription.status?.toUpperCase() === 'READY' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handlePrescriptionStatusUpdate(prescriptionId, 'delivered')}
+                                    disabled={loading}
+                                    className="bg-purple-600 hover:bg-purple-700"
+                                  >
+                                    Mark Delivered
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handlePrescriptionStatusUpdate(prescriptionId, 'completed')}
+                                    disabled={loading}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  >
+                                    Mark Completed
+                                  </Button>
+                                </>
+                              )}
+                              {prescription.status?.toUpperCase() === 'DELIVERED' && (
                                 <Button
                                   size="sm"
-                                  onClick={() => handlePrescriptionStatusUpdate(prescription._id, 'ready')}
+                                  onClick={() => handlePrescriptionStatusUpdate(prescriptionId, 'completed')}
+                                  disabled={loading}
+                                  className="bg-emerald-600 hover:bg-emerald-700"
                                 >
-                                  Mark Ready
+                                  Mark Completed
                                 </Button>
                               )}
-                              {prescription.status === 'ready' && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handlePrescriptionStatusUpdate(prescription._id, 'delivered')}
-                                >
-                                  Mark Delivered
-                                </Button>
+                              {prescription.status?.toUpperCase() === 'CANCELLED' && (
+                                <Badge variant="destructive" className="w-full justify-center">
+                                  Cancelled
+                                </Badge>
                               )}
-                              <Button size="sm" variant="outline" onClick={() => handleGenerateQR(prescription._id)}>
+                              <Button size="sm" variant="outline" onClick={() => handleGenerateQR(prescriptionId)}>
                                 <QrCode className="h-4 w-4 mr-1" />
                                 QR Code
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleGetAISuggestions(prescription._id)}>
+                              <Button size="sm" variant="outline" onClick={() => handleGetAISuggestions(prescriptionId)}>
                                 <Sparkles className="h-4 w-4 mr-1" />
                                 AI Suggestions
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handleCheckAvailability(prescription)}
+                                disabled={checkingAvailability}
+                                className={
+                                  prescription.status?.toUpperCase() === 'PENDING' || prescription.status?.toUpperCase() === 'PROCESSING'
+                                    ? 'border-orange-500 text-orange-600 hover:bg-orange-50'
+                                    : ''
+                                }
+                              >
+                                <Package className="h-4 w-4 mr-1" />
+                                Check Availability
                               </Button>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))
+                    );
+                    })
                   )}
                 </div>
               </CardContent>
@@ -797,6 +953,173 @@ export default function PharmacyDashboard() {
                     Add Supplier
                   </Button>
                   <Button onClick={() => setShowAddSupplier(false)} variant="outline" className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Availability Check Modal */}
+        {showAvailabilityModal && availabilityData && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Prescription Availability Check</CardTitle>
+                    <CardDescription>
+                      Patient: {(selectedPrescription?.patient || selectedPrescription?.patientId)?.firstName} {(selectedPrescription?.patient || selectedPrescription?.patientId)?.lastName}
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowAvailabilityModal(false);
+                      setAvailabilityData(null);
+                      setSelectedPrescription(null);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {availabilityData.allAvailable ? (
+                  <div className="flex items-center gap-2 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="font-semibold text-green-900">All items are available</p>
+                      <p className="text-sm text-green-700">You can proceed with filling this prescription</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 p-4 bg-red-50 rounded-lg border border-red-200">
+                      <XCircle className="h-5 w-5 text-red-600" />
+                      <div>
+                        <p className="font-semibold text-red-900">Some items are missing or unavailable</p>
+                        <p className="text-sm text-red-700">You may need to reject this prescription and return it to the doctor</p>
+                      </div>
+                    </div>
+
+                    {availabilityData.missingItems.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2 text-red-900">Missing Items:</h4>
+                        <div className="space-y-2">
+                          {availabilityData.missingItems.map((item: any, idx: number) => (
+                            <div key={idx} className="p-3 bg-red-50 rounded border border-red-200">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{item.name}</span>
+                                <Badge variant="destructive">
+                                  {item.status === 'out_of_stock' ? 'Out of Stock' : 'Not Found'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Required: {item.required} | Available: {item.available}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {availabilityData.availableItems.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-2 text-green-900">Available Items:</h4>
+                        <div className="space-y-2">
+                          {availabilityData.availableItems.map((item: any, idx: number) => (
+                            <div key={idx} className="p-3 bg-green-50 rounded border border-green-200">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{item.name}</span>
+                                <Badge className="bg-green-500">
+                                  {item.status === 'available' ? `Stock: ${item.available}` : item.status}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t">
+                      <Label htmlFor="reject-reason">Rejection Reason (Required if rejecting):</Label>
+                      <textarea
+                        id="reject-reason"
+                        className="w-full mt-2 p-3 border rounded-md min-h-[100px]"
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="Enter reason for rejecting this prescription..."
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          setShowRejectModal(true);
+                        }}
+                        disabled={!rejectReason.trim()}
+                        className="flex-1"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Reject & Return to Doctor
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowAvailabilityModal(false);
+                          setAvailabilityData(null);
+                          setSelectedPrescription(null);
+                          setRejectReason('');
+                        }}
+                        className="flex-1"
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Reject Confirmation Modal */}
+        {showRejectModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="text-red-600">Confirm Rejection</CardTitle>
+                <CardDescription>
+                  This will return the prescription to the doctor and notify both the doctor and patient.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <p className="text-sm font-medium text-yellow-900">
+                    Missing Items: {availabilityData?.missingItems?.map((item: any) => item.name).join(', ') || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <Label>Rejection Reason:</Label>
+                  <p className="mt-2 p-3 bg-gray-50 rounded border text-sm">{rejectReason}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="destructive"
+                    onClick={handleRejectPrescription}
+                    className="flex-1"
+                  >
+                    Confirm Rejection
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRejectModal(false)}
+                    className="flex-1"
+                  >
                     Cancel
                   </Button>
                 </div>

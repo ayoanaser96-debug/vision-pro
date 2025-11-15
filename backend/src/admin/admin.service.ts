@@ -1,33 +1,92 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument, UserRole } from '../users/schemas/user.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserRole } from '@prisma/client';
 import { EyeTestsService } from '../eye-tests/eye-tests.service';
 import { AppointmentsService } from '../appointments/appointments.service';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private prisma: PrismaService,
     private eyeTestsService: EyeTestsService,
     private appointmentsService: AppointmentsService,
   ) {}
 
   async getAllUsers(role?: string) {
-    const query = role ? { role } : {};
-    return this.userModel.find(query).select('-password');
+    const where = role ? { role: role as UserRole } : {};
+    return this.prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        specialty: true,
+        profileImage: true,
+        dateOfBirth: true,
+        address: true,
+        emailVerified: true,
+        phoneVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   async getUserById(id: string) {
-    return this.userModel.findById(id).select('-password');
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        specialty: true,
+        profileImage: true,
+        dateOfBirth: true,
+        address: true,
+        emailVerified: true,
+        phoneVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   async updateUser(id: string, updateDto: any) {
-    return this.userModel.findByIdAndUpdate(id, updateDto, { new: true }).select('-password');
+    return this.prisma.user.update({
+      where: { id },
+      data: updateDto,
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        status: true,
+        specialty: true,
+        profileImage: true,
+        dateOfBirth: true,
+        address: true,
+        emailVerified: true,
+        phoneVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   async deleteUser(id: string) {
-    return this.userModel.findByIdAndDelete(id);
+    return this.prisma.user.delete({
+      where: { id },
+    });
   }
 
   async getAnalytics() {
@@ -39,15 +98,14 @@ export class AdminService {
       pendingTests,
       completedTests,
     ] = await Promise.all([
-      this.userModel.countDocuments({ role: UserRole.PATIENT }),
-      this.userModel.countDocuments({ role: UserRole.DOCTOR }),
-      this.userModel.countDocuments({ role: UserRole.ANALYST }),
+      this.prisma.user.count({ where: { role: UserRole.PATIENT } }),
+      this.prisma.user.count({ where: { role: UserRole.DOCTOR } }),
+      this.prisma.user.count({ where: { role: UserRole.ANALYST } }),
       this.appointmentsService.findAll().then(apts => apts.length),
       this.eyeTestsService.findPendingForAnalysis().then(tests => tests.length),
       this.eyeTestsService.findAnalyzedForDoctor().then(tests => tests.length),
     ]);
 
-    // Get appointments by day (last 7 days)
     const appointments = await this.appointmentsService.findAll();
     const appointmentsByDay = this.groupByDay(appointments);
 
@@ -83,5 +141,3 @@ export class AdminService {
     }));
   }
 }
-
-

@@ -1,24 +1,26 @@
 import { Injectable, NotFoundException, Inject, forwardRef, Optional } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { EyeTest, EyeTestDocument, TestStatus } from './schemas/eye-test.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { TestStatus } from '@prisma/client';
 import { PatientJourneyService } from '../patients/patient-journey.service';
 
 @Injectable()
 export class EyeTestsService {
   constructor(
-    @InjectModel(EyeTest.name) private eyeTestModel: Model<EyeTestDocument>,
+    private prisma: PrismaService,
     @Optional() @Inject(forwardRef(() => PatientJourneyService))
     private patientJourneyService?: PatientJourneyService,
   ) {}
 
   async create(createDto: any) {
-    const test = new this.eyeTestModel(createDto);
-    return test.save();
+    return this.prisma.eyeTest.create({
+      data: createDto,
+    });
   }
 
   async runAIAnalysis(testId: string) {
-    const test = await this.eyeTestModel.findById(testId);
+    const test = await this.prisma.eyeTest.findUnique({
+      where: { id: testId },
+    });
     if (!test) {
       throw new NotFoundException('Test not found');
     }
@@ -26,14 +28,17 @@ export class EyeTestsService {
     // Simulate AI analysis (replace with actual AI model integration)
     const aiAnalysis = this.simulateAIAnalysis(test);
 
-    test.aiAnalysis = aiAnalysis;
-    test.status = TestStatus.ANALYZED;
-    return test.save();
+    return this.prisma.eyeTest.update({
+      where: { id: testId },
+      data: {
+        aiAnalysis: aiAnalysis as any,
+        status: TestStatus.ANALYZED,
+      },
+    });
   }
 
-  private simulateAIAnalysis(test: EyeTestDocument): any {
+  private simulateAIAnalysis(test: any): any {
     // Simulate AI analysis results
-    // In production, this would call an actual AI model
     return {
       cataract: {
         detected: Math.random() > 0.7,
@@ -55,38 +60,76 @@ export class EyeTestsService {
   }
 
   async findByPatient(patientId: string) {
-    return this.eyeTestModel
-      .find({ patientId })
-      .populate('doctorId', 'firstName lastName specialty')
-      .populate('analystId', 'firstName lastName')
-      .sort({ createdAt: -1 });
+    return this.prisma.eyeTest.findMany({
+      where: { patientId },
+      include: {
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            specialty: true,
+          },
+        },
+        analyst: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findPendingForAnalysis() {
-    return this.eyeTestModel
-      .find({ status: TestStatus.PENDING })
-      .populate('patientId', 'firstName lastName')
-      .sort({ createdAt: 1 });
+    return this.prisma.eyeTest.findMany({
+      where: { status: TestStatus.PENDING },
+      include: {
+        patient: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
   }
 
   async findAnalyzedForDoctor(doctorId?: string) {
-    const query: any = { status: TestStatus.ANALYZED };
+    const where: any = { status: TestStatus.ANALYZED };
     if (doctorId) {
-      query.doctorId = doctorId;
+      where.doctorId = doctorId;
     }
-    return this.eyeTestModel
-      .find(query)
-      .populate('patientId', 'firstName lastName')
-      .populate('analystId', 'firstName lastName')
-      .sort({ createdAt: -1 });
+    return this.prisma.eyeTest.findMany({
+      where,
+      include: {
+        patient: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+        analyst: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findById(id: string) {
-    const test = await this.eyeTestModel
-      .findById(id)
-      .populate('patientId')
-      .populate('doctorId')
-      .populate('analystId');
+    const test = await this.prisma.eyeTest.findUnique({
+      where: { id },
+      include: {
+        patient: true,
+        doctor: true,
+        analyst: true,
+      },
+    });
     if (!test) {
       throw new NotFoundException('Test not found');
     }
@@ -94,27 +137,30 @@ export class EyeTestsService {
   }
 
   async update(id: string, updateDto: any) {
-    return this.eyeTestModel.findByIdAndUpdate(id, updateDto, { new: true });
+    return this.prisma.eyeTest.update({
+      where: { id },
+      data: updateDto,
+    });
   }
 
   async addAnalystNotes(id: string, notes: string, analystId: string) {
-    const updated = await this.eyeTestModel.findByIdAndUpdate(
-      id,
-      { analystNotes: notes, analystId, status: TestStatus.DOCTOR_REVIEW },
-      { new: true },
-    ).populate('patientId');
+    const updated = await this.prisma.eyeTest.update({
+      where: { id },
+      data: {
+        analystNotes: notes,
+        analystId,
+        status: TestStatus.DOCTOR_REVIEW,
+      },
+      include: {
+        patient: true,
+      },
+    });
     
     // Update patient journey - mark analyst step as complete
     if (this.patientJourneyService && updated?.patientId) {
       try {
-        const patientId = typeof updated.patientId === 'string' 
-          ? updated.patientId 
-          : (updated.patientId as any)?._id?.toString() || (updated.patientId as any)?.id?.toString();
-        if (patientId) {
-          await this.patientJourneyService.markAnalystComplete(patientId, analystId);
-        }
-      } catch (error) {
-        // Journey might not exist, that's okay
+        await this.patientJourneyService.markAnalystComplete(updated.patientId, analystId);
+      } catch (error: any) {
         console.log('Journey update skipped:', error.message);
       }
     }
@@ -123,34 +169,27 @@ export class EyeTestsService {
   }
 
   async doctorReview(id: string, review: any) {
-    const updated = await this.eyeTestModel.findByIdAndUpdate(
-      id,
-      {
+    const updated = await this.prisma.eyeTest.update({
+      where: { id },
+      data: {
         doctorNotes: review.notes,
         doctorApproved: review.approved,
         doctorId: review.doctorId,
         status: review.approved ? TestStatus.COMPLETED : TestStatus.DOCTOR_REVIEW,
       },
-      { new: true },
-    ).populate('patientId');
+      include: {
+        patient: true,
+      },
+    });
 
     // Update patient journey - mark doctor step as complete
     if (this.patientJourneyService && updated?.patientId && review.approved) {
       try {
-        const patientId = typeof updated.patientId === 'string' 
-          ? updated.patientId 
-          : (updated.patientId as any)?._id?.toString() || (updated.patientId as any)?.id?.toString();
-        if (patientId) {
-          await this.patientJourneyService.markDoctorComplete(patientId, review.doctorId);
-        }
-      } catch (error) {
-        // Journey might not exist, that's okay
+        await this.patientJourneyService.markDoctorComplete(updated.patientId, review.doctorId);
+      } catch (error: any) {
         console.log('Journey update skipped:', error.message);
       }
     }
-
-    // Auto-create case when doctor reviews (if case doesn't exist)
-    // This will be handled in the doctor review endpoint
 
     return updated;
   }

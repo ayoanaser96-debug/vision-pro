@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../users/schemas/user.schema';
+import { PrismaService } from '../prisma/prisma.service';
 import { EyeTestsService } from '../eye-tests/eye-tests.service';
 import { PrescriptionsService } from '../prescriptions/prescriptions.service';
 import { AppointmentsService } from '../appointments/appointments.service';
@@ -10,7 +8,7 @@ import { PatientsService } from '../patients/patients.service';
 @Injectable()
 export class DoctorsService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    private prisma: PrismaService,
     private eyeTestsService: EyeTestsService,
     private prescriptionsService: PrescriptionsService,
     private appointmentsService: AppointmentsService,
@@ -18,12 +16,11 @@ export class DoctorsService {
   ) {}
 
   async getAssignedPatients(doctorId: string) {
-    // Get patients assigned to this doctor via appointments or tests
     const appointments = await this.appointmentsService.findByDoctor(doctorId);
-    const patientIds = [...new Set(appointments.map(apt => apt.patientId.toString()))];
+    const patientIds = [...new Set(appointments.map(apt => apt.patientId as string))];
     
     return Promise.all(
-      patientIds.map(id => this.patientsService.getPatientProfile(id))
+      patientIds.map((id: string) => this.patientsService.getPatientProfile(id))
     );
   }
 
@@ -49,5 +46,3 @@ export class DoctorsService {
     return this.appointmentsService.findByDoctor(doctorId);
   }
 }
-
-

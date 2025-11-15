@@ -1,50 +1,53 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../users/schemas/user.schema';
-import { EyeTest, EyeTestDocument } from '../eye-tests/schemas/eye-test.schema';
-import { Prescription, PrescriptionDocument } from '../prescriptions/schemas/prescription.schema';
-import { Case, CaseDocument } from '../cases/schemas/case.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AnalyticsService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(EyeTest.name) private eyeTestModel: Model<EyeTestDocument>,
-    @InjectModel(Prescription.name) private prescriptionModel: Model<PrescriptionDocument>,
-    @InjectModel(Case.name) private caseModel: Model<CaseDocument>,
+    private prisma: PrismaService,
   ) {}
 
   async getDoctorPerformance(doctorId: string, startDate?: Date, endDate?: Date) {
     const dateFilter: any = {};
     if (startDate || endDate) {
       dateFilter.createdAt = {};
-      if (startDate) dateFilter.createdAt.$gte = startDate;
-      if (endDate) dateFilter.createdAt.$lte = endDate;
+      if (startDate) dateFilter.createdAt.gte = startDate;
+      if (endDate) dateFilter.createdAt.lte = endDate;
     }
 
     const [casesReviewed, prescriptions, avgResponseTime] = await Promise.all([
-      this.caseModel.countDocuments({ assignedDoctors: doctorId, ...dateFilter }),
-      this.prescriptionModel.countDocuments({ doctorId, ...dateFilter }),
+      this.prisma.case.count({
+        where: {
+          assignedDoctors: { has: doctorId },
+          ...dateFilter,
+        },
+      }),
+      this.prisma.prescription.count({
+        where: { doctorId, ...dateFilter },
+      }),
       this.calculateAvgResponseTime(doctorId, dateFilter),
     ]);
 
-    const cases = await this.caseModel
-      .find({ assignedDoctors: doctorId, ...dateFilter })
-      .populate('eyeTestId');
+    const cases = await this.prisma.case.findMany({
+      where: {
+        assignedDoctors: { has: doctorId },
+        ...dateFilter,
+      },
+      include: { eyeTest: true },
+    });
 
     let aiAgreement = 0;
     let totalCasesWithAI = 0;
 
     for (const caseData of cases) {
-      const test: any = caseData.eyeTestId;
+      const test = caseData.eyeTest;
       if (test?.aiAnalysis && caseData.diagnosis) {
         totalCasesWithAI++;
-        // Simple agreement check (in production, use more sophisticated comparison)
         const aiDetected = [
-          test.aiAnalysis.cataract?.detected,
-          test.aiAnalysis.glaucoma?.detected,
-          test.aiAnalysis.diabeticRetinopathy?.detected,
+          (test.aiAnalysis as any).cataract?.detected,
+          (test.aiAnalysis as any).glaucoma?.detected,
+          (test.aiAnalysis as any).diabeticRetinopathy?.detected,
         ].some(Boolean);
 
         if (aiDetected && caseData.diagnosis) {
@@ -62,18 +65,23 @@ export class AnalyticsService {
   }
 
   private async calculateAvgResponseTime(doctorId: string, dateFilter: any): Promise<number> {
-    // Calculate average time from case assignment to first action
-    const cases = await this.caseModel.find({ assignedDoctors: doctorId, ...dateFilter });
+    const cases = await this.prisma.case.findMany({
+      where: {
+        assignedDoctors: { has: doctorId },
+        ...dateFilter,
+      },
+    });
     
     let totalTime = 0;
     let count = 0;
 
     for (const caseData of cases) {
-      if (caseData.timeline && caseData.timeline.length > 1) {
-        const assignedTime = (caseData as any).createdAt;
-        const firstActionTime = caseData.timeline[1]?.timestamp;
+      const timeline = (caseData.timeline as any[]) || [];
+      if (timeline.length > 1) {
+        const assignedTime = caseData.createdAt;
+        const firstActionTime = timeline[1]?.timestamp;
         if (firstActionTime && assignedTime) {
-          const timeDiff = firstActionTime.getTime() - new Date(assignedTime).getTime();
+          const timeDiff = new Date(firstActionTime).getTime() - assignedTime.getTime();
           if (timeDiff > 0) {
             totalTime += timeDiff;
             count++;
@@ -82,25 +90,27 @@ export class AnalyticsService {
       }
     }
 
-    return count > 0 ? totalTime / count / (1000 * 60) : 0; // Return in minutes
+    return count > 0 ? totalTime / count / (1000 * 60) : 0;
   }
 
   async getClinicInsights(startDate?: Date, endDate?: Date) {
     const dateFilter: any = {};
     if (startDate || endDate) {
       dateFilter.createdAt = {};
-      if (startDate) dateFilter.createdAt.$gte = startDate;
-      if (endDate) dateFilter.createdAt.$lte = endDate;
+      if (startDate) dateFilter.createdAt.gte = startDate;
+      if (endDate) dateFilter.createdAt.lte = endDate;
     }
 
     const [totalPatients, totalTests, totalPrescriptions, tests] = await Promise.all([
-      this.userModel.countDocuments({ role: 'patient', ...dateFilter }),
-      this.eyeTestModel.countDocuments(dateFilter),
-      this.prescriptionModel.countDocuments(dateFilter),
-      this.eyeTestModel.find(dateFilter).populate('patientId'),
+      this.prisma.user.count({ where: { role: UserRole.PATIENT, ...dateFilter } }),
+      this.prisma.eyeTest.count({ where: dateFilter }),
+      this.prisma.prescription.count({ where: dateFilter }),
+      this.prisma.eyeTest.findMany({
+        where: dateFilter,
+        include: { patient: true },
+      }),
     ]);
 
-    // Disease distribution
     const diseaseCounts = {
       cataract: 0,
       glaucoma: 0,
@@ -109,7 +119,7 @@ export class AnalyticsService {
     };
 
     for (const test of tests) {
-      const analysis = (test as any).aiAnalysis;
+      const analysis = test.aiAnalysis as any;
       if (analysis) {
         if (analysis.cataract?.detected) diseaseCounts.cataract++;
         if (analysis.glaucoma?.detected) diseaseCounts.glaucoma++;
@@ -120,8 +130,9 @@ export class AnalyticsService {
       }
     }
 
-    // Patient demographics (age groups)
-    const patients = await this.userModel.find({ role: 'patient', ...dateFilter });
+    const patients = await this.prisma.user.findMany({
+      where: { role: UserRole.PATIENT, ...dateFilter },
+    });
     const ageGroups = {
       '0-18': 0,
       '19-35': 0,
@@ -157,22 +168,20 @@ export class AnalyticsService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const query: any = { createdAt: { $gte: startDate } };
-    if (patientId) query.patientId = patientId;
+    const where: any = { createdAt: { gte: startDate } };
+    if (patientId) where.patientId = patientId;
 
-    const tests = await this.eyeTestModel.find(query).sort({ createdAt: 1 });
+    const tests = await this.prisma.eyeTest.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+    });
 
-    // Group by date
     const trends: Record<string, number> = {};
     for (const test of tests) {
-      const createdAt = (test as any).createdAt;
-      if (createdAt) {
-        const date = new Date(createdAt).toISOString().split('T')[0];
-        trends[date] = (trends[date] || 0) + 1;
-      }
+      const date = test.createdAt.toISOString().split('T')[0];
+      trends[date] = (trends[date] || 0) + 1;
     }
 
     return Object.entries(trends).map(([date, count]) => ({ date, count }));
   }
 }
-

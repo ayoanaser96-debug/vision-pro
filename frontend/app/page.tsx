@@ -8,6 +8,12 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const roleRedirectMap: Record<string, string> = {
+  PATIENT: "/dashboard/patient",
+  ANALYST: "/dashboard/analyst",
+  DOCTOR: "/dashboard/doctor",
+  ADMIN: "/dashboard/admin",
+  PHARMACY: "/dashboard/pharmacy",
+  // Also support lowercase for backwards compatibility
   patient: "/dashboard/patient",
   analyst: "/dashboard/analyst",
   doctor: "/dashboard/doctor",

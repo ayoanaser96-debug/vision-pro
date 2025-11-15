@@ -52,8 +52,12 @@ export function DocumentScanner({ onScanComplete, onCancel, userId }: DocumentSc
         return;
       }
 
-      // Request camera access with fallback to any camera
-      let mediaStream;
+      console.log('Requesting camera access for document scanning...');
+      
+      // Try multiple strategies to get camera access
+      let mediaStream: MediaStream | null = null;
+      
+      // Strategy 1: Try back camera (environment) for documents
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -62,39 +66,70 @@ export function DocumentScanner({ onScanComplete, onCancel, userId }: DocumentSc
             facingMode: { ideal: 'environment' }, // Back camera for documents
           },
         });
-      } catch (constraintError) {
-        // If back camera fails, try any camera
+      } catch (err: any) {
+        console.log('Back camera failed, trying any camera...', err.name);
+        
+        // Strategy 2: Try any camera with ideal resolution
         try {
           mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: true, // Just request any video stream
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
           });
-        } catch (fallbackError: any) {
-          throw constraintError; // Throw original error if fallback also fails
+        } catch (err2: any) {
+          console.log('Ideal resolution failed, trying minimal constraints...', err2.name);
+          
+          // Strategy 3: Try with minimal constraints
+          try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+            });
+          } catch (err3: any) {
+            console.log('All camera strategies failed:', err3.name);
+            throw err3;
+          }
         }
       }
       
       if (videoRef.current && mediaStream) {
         videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
+        console.log('Camera stream set successfully for document scanning');
       }
     } catch (err: any) {
+      console.error('Camera access error:', err);
       let errorDescription = 'Failed to access camera. ';
       
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errorDescription = 'Camera permission denied. Please allow camera access in your browser settings.';
+        errorDescription = 'Camera permission denied. Please allow camera access in your browser settings and refresh the page.';
+        toast({
+          title: 'Camera Permission Denied',
+          description: 'Please allow camera access and refresh the page. Check your browser address bar for the camera icon.',
+          variant: 'destructive',
+        });
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        errorDescription = 'No camera found. Please ensure a camera is connected.';
+        errorDescription = 'No camera found. Please ensure a camera is connected and try again.';
+        toast({
+          title: 'No Camera Found',
+          description: 'No camera detected. Please connect a camera and refresh the page.',
+          variant: 'destructive',
+        });
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        errorDescription = 'Camera is already in use by another application.';
+        errorDescription = 'Camera is already in use by another application. Please close other apps using the camera.';
+        toast({
+          title: 'Camera In Use',
+          description: 'Camera is being used by another application. Please close other apps and try again.',
+          variant: 'destructive',
+        });
       } else {
-        errorDescription = err.message || 'Please check your camera permissions.';
+        errorDescription = err.message || 'Please check your camera permissions and try again.';
+        toast({
+          title: 'Camera Error',
+          description: err.message || 'Failed to access camera. Please check your camera settings.',
+          variant: 'destructive',
+        });
       }
-
-      toast({
-        title: 'Camera Error',
-        description: errorDescription,
-        variant: 'destructive',
-      });
     }
   };
 

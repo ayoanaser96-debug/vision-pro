@@ -15,27 +15,30 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const normalizedRole = user?.role?.toUpperCase() || '';
+
   const handleLogout = () => {
     logout();
     router.push('/login');
   };
 
-  const roleName = user?.role 
-    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+  const roleName = normalizedRole
+    ? normalizedRole.charAt(0) + normalizedRole.slice(1).toLowerCase()
     : 'User';
 
   const navItems = [
-    { href: '/dashboard/patient', label: 'Patient Dashboard', roles: ['patient'] },
-    { href: '/dashboard/analyst', label: 'Analyst Dashboard', roles: ['analyst', 'admin'] },
-    { href: '/dashboard/doctor', label: 'Doctor Dashboard', roles: ['doctor', 'admin'] },
-    { href: '/dashboard/admin', label: 'Admin Panel', roles: ['admin'] },
+    { href: '/dashboard/patient', label: 'Patient Dashboard', roles: ['PATIENT'] },
+    { href: '/dashboard/analyst', label: 'Analyst Dashboard', roles: ['ANALYST', 'ADMIN'] },
+    { href: '/dashboard/doctor', label: 'Doctor Dashboard', roles: ['DOCTOR', 'ADMIN'] },
+    { href: '/dashboard/pharmacy', label: 'Pharmacy Dashboard', roles: ['PHARMACY', 'ADMIN'] },
+    { href: '/dashboard/admin', label: 'Admin Panel', roles: ['ADMIN'] },
   ];
 
   const visibleNavItems = navItems.filter(
-    item => item.roles.includes(user?.role || '')
+    item => item.roles.includes(normalizedRole)
   );
 
-  const isPatientPortal = user?.role === 'patient';
+  const isPatientPortal = normalizedRole === 'PATIENT';
   
   return (
     <div className={`min-h-screen bg-background dashboard-theme ${isPatientPortal ? 'patient-portal' : ''}`} data-portal={isPatientPortal ? 'patient' : undefined} data-dashboard="true">

@@ -43,9 +43,28 @@ export default function LoginPage() {
 
     try {
       if (isLogin) {
-        await login(formData.identifier, formData.password);
+        const userData = await login(formData.identifier, formData.password);
         toast({ title: 'Success', description: 'Logged in successfully' });
-        router.push('/');
+        
+        // Role mapping with both uppercase and lowercase support
+        const roleMap: Record<string, string> = {
+          PATIENT: '/dashboard/patient',
+          ANALYST: '/dashboard/analyst',
+          DOCTOR: '/dashboard/doctor',
+          ADMIN: '/dashboard/admin',
+          PHARMACY: '/dashboard/pharmacy',
+          patient: '/dashboard/patient',
+          analyst: '/dashboard/analyst',
+          doctor: '/dashboard/doctor',
+          admin: '/dashboard/admin',
+          pharmacy: '/dashboard/pharmacy',
+        };
+        
+        const redirectPath = roleMap[userData.role] || '/login';
+        console.log('Login successful, redirecting:', { role: userData.role, redirectPath, userData });
+        
+        // Use window.location for a hard redirect to ensure state is cleared
+        window.location.href = redirectPath;
       } else {
         const registrationData = { ...formData };
         
@@ -64,7 +83,7 @@ export default function LoginPage() {
           }
         }
 
-        await register(registrationData);
+        const userData = await register(registrationData);
         
         // Register face if captured
         if (capturedFace) {
@@ -95,7 +114,26 @@ export default function LoginPage() {
         }
 
         toast({ title: 'Success', description: 'Registered successfully' });
-        router.push('/');
+        
+        // Role mapping with both uppercase and lowercase support
+        const roleMap: Record<string, string> = {
+          PATIENT: '/dashboard/patient',
+          ANALYST: '/dashboard/analyst',
+          DOCTOR: '/dashboard/doctor',
+          ADMIN: '/dashboard/admin',
+          PHARMACY: '/dashboard/pharmacy',
+          patient: '/dashboard/patient',
+          analyst: '/dashboard/analyst',
+          doctor: '/dashboard/doctor',
+          admin: '/dashboard/admin',
+          pharmacy: '/dashboard/pharmacy',
+        };
+        
+        const redirectPath = roleMap[userData.role] || '/login';
+        console.log('Registration successful, redirecting:', { role: userData.role, redirectPath, userData });
+        
+        // Use window.location for a hard redirect to ensure state is cleared
+        window.location.href = redirectPath;
       }
     } catch (error: any) {
       toast({

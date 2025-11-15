@@ -14,7 +14,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { FaceRecognitionService } from './face-recognition.service';
 import { DocumentScannerService } from './document-scanner.service';
-import { DocumentType } from './schemas/user-document.schema';
+import { DocumentType } from '@prisma/client';
 
 @Controller('biometric')
 export class BiometricController {

@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { AuditLog, AuditLogDocument, AuditAction } from './schemas/audit-log.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuditAction } from '@prisma/client';
 
 @Injectable()
 export class AuditService {
   constructor(
-    @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
+    private prisma: PrismaService,
   ) {}
 
   async log(data: {
@@ -19,23 +18,32 @@ export class AuditService {
     ipAddress?: string;
     metadata?: any;
   }) {
-    const log = new this.auditLogModel(data);
-    return log.save();
+    return this.prisma.auditLog.create({
+      data,
+    });
   }
 
   async findByEntity(entityType: string, entityId: string) {
-    return this.auditLogModel
-      .find({ entityType, entityId })
-      .populate('userId', 'firstName lastName role')
-      .sort({ createdAt: -1 });
+    return this.prisma.auditLog.findMany({
+      where: { entityType, entityId },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findByUser(userId: string, limit = 50) {
-    return this.auditLogModel
-      .find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(limit);
+    return this.prisma.auditLog.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
   }
 }
-
-

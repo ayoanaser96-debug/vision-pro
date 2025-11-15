@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Notification, NotificationDocument, NotificationType, NotificationPriority } from './schemas/notification.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { NotificationType, NotificationPriority } from '@prisma/client';
 
 @Injectable()
 export class NotificationsService {
   constructor(
-    @InjectModel(Notification.name)
-    private notificationModel: Model<NotificationDocument>,
+    private prisma: PrismaService,
   ) {}
 
   async create(notification: {
@@ -21,39 +19,45 @@ export class NotificationsService {
     relatedAppointmentId?: string;
     metadata?: any;
   }) {
-    const notif = new this.notificationModel(notification);
-    return notif.save();
+    return this.prisma.notification.create({
+      data: {
+        ...notification,
+        priority: notification.priority || NotificationPriority.MEDIUM,
+      },
+    });
   }
 
   async findByUser(userId: string) {
-    return this.notificationModel
-      .find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
   }
 
   async getUnreadCount(userId: string) {
-    return this.notificationModel.countDocuments({ userId, isRead: false });
+    return this.prisma.notification.count({
+      where: { userId, isRead: false },
+    });
   }
 
   async markAsRead(notificationId: string) {
-    return this.notificationModel.findByIdAndUpdate(
-      notificationId,
-      { isRead: true },
-      { new: true },
-    );
+    return this.prisma.notification.update({
+      where: { id: notificationId },
+      data: { isRead: true },
+    });
   }
 
   async markAllAsRead(userId: string) {
-    return this.notificationModel.updateMany(
-      { userId, isRead: false },
-      { isRead: true },
-    );
+    return this.prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    });
   }
 
   async delete(notificationId: string) {
-    return this.notificationModel.findByIdAndDelete(notificationId);
+    return this.prisma.notification.delete({
+      where: { id: notificationId },
+    });
   }
 }
-
-

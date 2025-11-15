@@ -106,7 +106,8 @@ export default function PatientJourneyPage() {
   const [checkingIn, setCheckingIn] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user?.role !== 'patient') {
+    const normalizedRole = user?.role?.toUpperCase() || '';
+    if (!authLoading && normalizedRole !== 'PATIENT') {
       router.push('/login');
     }
   }, [user, authLoading, router]);

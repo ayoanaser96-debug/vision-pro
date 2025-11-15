@@ -1,10 +1,22 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env file before anything else
+config({ path: resolve(__dirname, '../.env') });
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule);
+    console.log('🚀 Starting Vision Clinic Backend...');
+    console.log('💾 Database: MySQL (Prisma)');
+    console.log('📝 Make sure MySQL is running and DATABASE_URL is set in your .env file');
+    
+    const app = await NestFactory.create(AppModule, {
+      logger: ['error', 'warn', 'log'],
+    });
     
     // Enable CORS for offline operation
     app.enableCors({
@@ -30,11 +42,23 @@ async function bootstrap() {
     console.log(`✅ Application is running on: http://localhost:${port}`);
     console.log(`📊 Health check: http://localhost:${port}/health`);
     console.log(`🌐 CORS enabled for: http://localhost:3000`);
-    console.log(`💾 Database: MySQL (Offline Mode)`);
+    console.log(`💾 Database: MySQL via Prisma`);
   } catch (error: any) {
-    console.error('❌ Server startup error:', error);
-    console.error('Error details:', error.message);
+    // Check if it's a database connection error
+    if (error.message && (error.message.includes('P1001') || error.message.includes('ECONNREFUSED') || error.message.includes('database'))) {
+      console.error('\n❌ Database Connection Error:');
+      console.error('   MySQL is not running or not accessible.');
+      console.error('   To fix this:');
+      console.error('   1. Make sure MySQL is installed and running');
+      console.error('   2. Set DATABASE_URL in your .env file:');
+      console.error('      DATABASE_URL="mysql://user:password@localhost:3306/vision_clinic"');
+      console.error('   3. Run migrations: npm run prisma:migrate');
+      console.error('   4. Generate Prisma client: npm run prisma:generate\n');
+    }
+    console.error('❌ Server startup error:', error.message);
+    if (process.env.NODE_ENV === 'development') {
     console.error('Stack:', error.stack);
+    }
     process.exit(1);
   }
 }

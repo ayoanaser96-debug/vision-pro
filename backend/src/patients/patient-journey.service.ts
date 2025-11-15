@@ -1,15 +1,12 @@
 import { Injectable, NotFoundException, Inject, forwardRef, Optional } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { PatientJourney, PatientJourneyDocument, JourneyStep, JourneyStatus } from './schemas/patient-journey.schema';
+import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType, NotificationPriority } from '../notifications/schemas/notification.schema';
+import { NotificationType, NotificationPriority, JourneyStep, JourneyStatus } from '@prisma/client';
 
 @Injectable()
 export class PatientJourneyService {
   constructor(
-    @InjectModel(PatientJourney.name)
-    private journeyModel: Model<PatientJourneyDocument>,
+    private prisma: PrismaService,
     @Optional() @Inject(forwardRef(() => NotificationsService))
     private notificationsService?: NotificationsService,
   ) {}
@@ -19,9 +16,11 @@ export class PatientJourneyService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    let journey = await this.journeyModel.findOne({
-      patientId,
-      checkInTime: { $gte: today },
+    let journey = await this.prisma.patientJourney.findFirst({
+      where: {
+        patientId,
+        checkInTime: { gte: today },
+      },
     });
 
     if (!journey) {
@@ -44,19 +43,19 @@ export class PatientJourneyService {
         total: 375,
       };
 
-      journey = new this.journeyModel({
-        patientId,
-        patientName: `${patientData.firstName} ${patientData.lastName}`,
-        patientEmail: patientData.email,
-        patientPhone: patientData.phone,
-        checkInTime: new Date(),
-        steps,
-        overallStatus: JourneyStatus.IN_PROGRESS,
-        currentStep: JourneyStep.PAYMENT,
-        costs,
+      journey = await this.prisma.patientJourney.create({
+        data: {
+          patientId,
+          patientName: `${patientData.firstName} ${patientData.lastName}`,
+          patientEmail: patientData.email,
+          patientPhone: patientData.phone,
+          checkInTime: new Date(),
+          steps: steps as any,
+          overallStatus: JourneyStatus.IN_PROGRESS,
+          currentStep: JourneyStep.PAYMENT,
+          costs: costs as any,
+        },
       });
-
-      await journey.save();
 
       // Send notification
       await this.sendStepNotification(patientId, JourneyStep.REGISTRATION, 'Registration completed! Please proceed to payment.');
@@ -85,10 +84,13 @@ export class PatientJourneyService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const journey = await this.journeyModel.findOne({
-      patientId,
-      checkInTime: { $gte: today },
-    }).sort({ checkInTime: -1 });
+    const journey = await this.prisma.patientJourney.findFirst({
+      where: {
+        patientId,
+        checkInTime: { gte: today },
+      },
+      orderBy: { checkInTime: 'desc' },
+    });
 
     if (!journey) {
       throw new NotFoundException('No active journey found for today');
@@ -105,16 +107,17 @@ export class PatientJourneyService {
     notes?: string,
   ) {
     const journey = await this.getJourney(patientId);
+    const steps = journey.steps as any[];
 
-    const stepIndex = journey.steps.findIndex((s) => s.step === step);
+    const stepIndex = steps.findIndex((s) => s.step === step);
     if (stepIndex === -1) {
       throw new NotFoundException(`Step ${step} not found in journey`);
     }
 
-    const wasPending = journey.steps[stepIndex].status === JourneyStatus.PENDING;
-    journey.steps[stepIndex].status = status;
+    const wasPending = steps[stepIndex].status === JourneyStatus.PENDING;
+    steps[stepIndex].status = status;
     if (status === JourneyStatus.COMPLETED) {
-      journey.steps[stepIndex].completedAt = new Date();
+      steps[stepIndex].completedAt = new Date();
       if (wasPending) {
         // Send notification when step is completed
         const stepNames: Record<JourneyStep, string> = {
@@ -143,36 +146,41 @@ export class PatientJourneyService {
       }
     }
     if (staffId) {
-      journey.steps[stepIndex].staffId = staffId;
+      steps[stepIndex].staffId = staffId;
     }
     if (notes) {
-      journey.steps[stepIndex].notes = notes;
+      steps[stepIndex].notes = notes;
     }
 
     // Update current step
-    const nextPendingStep = journey.steps.find(
+    const nextPendingStep = steps.find(
       (s) => s.status === JourneyStatus.PENDING,
     );
-    if (nextPendingStep) {
-      journey.currentStep = nextPendingStep.step;
-    } else {
-      journey.currentStep = JourneyStep.COMPLETED;
-      journey.overallStatus = JourneyStatus.COMPLETED;
-      journey.checkOutTime = new Date();
-      
-      // Generate receipt when all steps are complete
-      if (!journey.receiptGenerated) {
-        journey.receiptGenerated = true;
-        await this.sendStepNotification(
-          patientId,
-          JourneyStep.COMPLETED,
-          `Your visit is complete! Total cost: $${journey.costs?.total || 0}. Receipt has been generated.`
-        );
-      }
+    let currentStep = nextPendingStep ? nextPendingStep.step : JourneyStep.COMPLETED;
+    let overallStatus = nextPendingStep ? JourneyStatus.IN_PROGRESS : JourneyStatus.COMPLETED;
+    let checkOutTime = journey.checkOutTime;
+    let receiptGenerated = journey.receiptGenerated;
+
+    if (!nextPendingStep && !receiptGenerated) {
+      checkOutTime = new Date();
+      receiptGenerated = true;
+      await this.sendStepNotification(
+        patientId,
+        JourneyStep.COMPLETED,
+        `Your visit is complete! Total cost: $${(journey.costs as any)?.total || 0}. Receipt has been generated.`
+      );
     }
 
-    await journey.save();
-    return journey;
+    return this.prisma.patientJourney.update({
+      where: { id: journey.id },
+      data: {
+        steps: steps as any,
+        currentStep,
+        overallStatus,
+        checkOutTime,
+        receiptGenerated,
+      },
+    });
   }
 
   async generateReceipt(patientId: string) {
@@ -188,11 +196,11 @@ export class PatientJourneyService {
       checkInTime: journey.checkInTime,
       checkOutTime: journey.checkOutTime,
       costs: journey.costs,
-      steps: journey.steps.map(s => ({
+      steps: (journey.steps as any[]).map(s => ({
         step: s.step,
         completedAt: s.completedAt,
       })),
-      totalCost: journey.costs?.total || 0,
+      totalCost: (journey.costs as any)?.total || 0,
       receiptDate: new Date(),
     };
   }
@@ -208,8 +216,10 @@ export class PatientJourneyService {
   async markDoctorComplete(patientId: string, staffId?: string, appointmentId?: string) {
     const journey = await this.updateStep(patientId, JourneyStep.DOCTOR, JourneyStatus.COMPLETED, staffId);
     if (appointmentId) {
-      journey.appointmentId = appointmentId;
-      await journey.save();
+      return this.prisma.patientJourney.update({
+        where: { id: journey.id },
+        data: { appointmentId },
+      });
     }
     return journey;
   }
@@ -217,8 +227,10 @@ export class PatientJourneyService {
   async markPharmacyComplete(patientId: string, staffId?: string, prescriptionId?: string) {
     const journey = await this.updateStep(patientId, JourneyStep.PHARMACY, JourneyStatus.COMPLETED, staffId);
     if (prescriptionId) {
-      journey.prescriptionId = prescriptionId;
-      await journey.save();
+      return this.prisma.patientJourney.update({
+        where: { id: journey.id },
+        data: { prescriptionId },
+      });
     }
     return journey;
   }
@@ -227,10 +239,13 @@ export class PatientJourneyService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return this.journeyModel.find({
-      checkInTime: { $gte: today },
-      overallStatus: { $ne: JourneyStatus.COMPLETED },
-    }).sort({ checkInTime: -1 });
+    return this.prisma.patientJourney.findMany({
+      where: {
+        checkInTime: { gte: today },
+        overallStatus: { not: JourneyStatus.COMPLETED },
+      },
+      orderBy: { checkInTime: 'desc' },
+    });
   }
 }
 

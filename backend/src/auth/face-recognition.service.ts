@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { UserFace, UserFaceDocument } from './schemas/user-face.schema';
+import { PrismaService } from '../prisma/prisma.service';
 import { spawn } from 'child_process';
 import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
@@ -12,89 +10,172 @@ export class FaceRecognitionService {
   private readonly logger = new Logger(FaceRecognitionService.name);
 
   constructor(
-    @InjectModel(UserFace.name)
-    private userFaceModel: Model<UserFaceDocument>,
+    private prisma: PrismaService,
   ) {}
 
-  async registerFace(userId: string, faceImage: string): Promise<UserFaceDocument> {
+  async registerFace(userId: string, faceImage: string) {
     try {
+      // Validate input
+      if (!userId || !faceImage) {
+        throw new Error('User ID and face image are required');
+      }
+
+      // Clean base64 string if needed
+      let cleanImage = faceImage;
+      if (faceImage.includes(',')) {
+        cleanImage = faceImage.split(',')[1];
+      }
+
       // Extract face descriptor from image
-      const descriptor = await this.extractFaceDescriptor(faceImage);
+      const descriptor = await this.extractFaceDescriptor(cleanImage);
+
+      if (!descriptor) {
+        throw new Error('Failed to extract face descriptor from image');
+      }
 
       // Check if face already exists for this user
-      const existing = await this.userFaceModel.findOne({ userId });
+      const existing = await this.prisma.userFace.findUnique({
+        where: { userId },
+      });
       
       if (existing) {
         // Update existing face data
-        existing.faceDescriptor = descriptor;
-        existing.faceImage = faceImage;
-        existing.confidence = 0.95; // Set confidence after registration
-        return existing.save();
+        const updated = await this.prisma.userFace.update({
+          where: { userId },
+          data: {
+            faceDescriptor: descriptor,
+            faceImage: cleanImage,
+            confidence: 0.95,
+            isActive: true,
+            updatedAt: new Date(),
+          },
+        });
+        this.logger.log(`Face updated for user ${userId}`);
+        return updated;
       } else {
         // Create new face record
-        const userFace = new this.userFaceModel({
-          userId,
-          faceDescriptor: descriptor,
-          faceImage,
-          confidence: 0.95,
-          isActive: true,
+        const created = await this.prisma.userFace.create({
+          data: {
+            userId,
+            faceDescriptor: descriptor,
+            faceImage: cleanImage,
+            confidence: 0.95,
+            isActive: true,
+          },
         });
-        return userFace.save();
+        this.logger.log(`Face registered for user ${userId}`);
+        return created;
       }
     } catch (error: any) {
+      this.logger.error(`Failed to register face for user ${userId}: ${error.message}`);
       throw new Error(`Failed to register face: ${error.message}`);
     }
   }
 
   async recognizeFace(faceImage: string, threshold: number = 0.6): Promise<any> {
     try {
-      // Extract face descriptor from provided image
-      const queryDescriptor = await this.extractFaceDescriptor(faceImage);
+      // Validate input
+      if (!faceImage) {
+        throw new Error('Face image is required');
+      }
 
-      // Find all active face records
-      const allFaces = await this.userFaceModel.find({ isActive: true }).populate('userId');
+      // Clean base64 string if needed
+      let cleanImage = faceImage;
+      if (faceImage.includes(',')) {
+        cleanImage = faceImage.split(',')[1];
+      }
+
+      // Extract face descriptor from provided image
+      const queryDescriptor = await this.extractFaceDescriptor(cleanImage);
+
+      if (!queryDescriptor) {
+        throw new Error('Failed to extract face descriptor from image');
+      }
+
+      // Find all active face records with user data
+      const allFaces = await this.prisma.userFace.findMany({
+        where: { isActive: true },
+        include: { user: true },
+      });
+
+      if (allFaces.length === 0) {
+        this.logger.warn('No registered faces found for recognition');
+        return null;
+      }
 
       let bestMatch = null;
       let bestDistance = Infinity;
 
       // Compare with all registered faces
       for (const face of allFaces) {
-        const distance = this.calculateDistance(queryDescriptor, face.faceDescriptor);
-        
-        if (distance < threshold && distance < bestDistance) {
-          bestDistance = distance;
-          bestMatch = {
-            userId: face.userId,
-            confidence: 1 - distance, // Convert distance to confidence
-            faceId: face._id,
-            user: face.userId,
-          };
+        try {
+          const distance = this.calculateDistance(queryDescriptor, face.faceDescriptor);
+          
+          this.logger.debug(`Distance to user ${face.userId}: ${distance.toFixed(4)}`);
+          
+          if (distance < threshold && distance < bestDistance) {
+            bestDistance = distance;
+            bestMatch = {
+              userId: face.userId,
+              confidence: Math.max(0, Math.min(1, 1 - distance)), // Convert distance to confidence (0-1)
+              faceId: face.id,
+              user: face.user,
+            };
+          }
+        } catch (compareError: any) {
+          this.logger.warn(`Failed to compare with face ${face.id}: ${compareError.message}`);
+          continue;
         }
+      }
+
+      if (bestMatch) {
+        this.logger.log(`Face recognized: user ${bestMatch.userId} with confidence ${bestMatch.confidence.toFixed(4)}`);
+      } else {
+        this.logger.warn(`No face match found (threshold: ${threshold})`);
       }
 
       return bestMatch;
     } catch (error: any) {
+      this.logger.error(`Failed to recognize face: ${error.message}`);
       throw new Error(`Failed to recognize face: ${error.message}`);
     }
   }
 
   private async extractFaceDescriptor(imageBase64: string): Promise<string> {
     try {
+      // Ensure we have valid base64 data
+      let cleanBase64 = imageBase64;
+      if (imageBase64.includes(',')) {
+        // Remove data URL prefix if present (data:image/jpeg;base64,...)
+        cleanBase64 = imageBase64.split(',')[1];
+      }
+
+      // Validate base64 string
+      if (!cleanBase64 || cleanBase64.length < 100) {
+        throw new Error('Invalid base64 image data');
+      }
+
       // Try using Python DeepFace for real face recognition
-      const pythonResult = await this.runPythonFaceRecognition('extract', imageBase64);
+      const pythonResult = await this.runPythonFaceRecognition('extract', cleanBase64);
       
-      if (pythonResult.success && pythonResult.descriptor) {
-        // Convert descriptor array to string for storage
+      if (pythonResult.success && pythonResult.descriptor && Array.isArray(pythonResult.descriptor)) {
+        // Convert descriptor array to JSON string for storage
+        this.logger.log(`Successfully extracted face descriptor with ${pythonResult.descriptor.length} dimensions`);
         return JSON.stringify(pythonResult.descriptor);
       }
       
       // Fallback to hash-based descriptor if Python fails
       this.logger.warn('Python face recognition not available, using hash-based fallback');
-      const hash = this.imageHash(imageBase64);
+      const hash = this.imageHash(cleanBase64);
       return Buffer.from(hash).toString('base64');
     } catch (error: any) {
       this.logger.error(`Failed to extract face descriptor: ${error.message}`);
-      const hash = this.imageHash(imageBase64);
+      // Still return a hash-based descriptor so registration doesn't fail completely
+      let cleanBase64 = imageBase64;
+      if (imageBase64.includes(',')) {
+        cleanBase64 = imageBase64.split(',')[1];
+      }
+      const hash = this.imageHash(cleanBase64);
       return Buffer.from(hash).toString('base64');
     }
   }
@@ -107,53 +188,133 @@ export class FaceRecognitionService {
       const tempImagePath = join(process.cwd(), `temp_${Date.now()}_${crypto.randomBytes(8).toString('hex')}.jpg`);
       
       try {
-        // Write base64 image to temp file
-        const buffer = Buffer.from(imageBase64, 'base64');
+        // Decode base64 image to buffer
+        let buffer: Buffer;
+        try {
+          buffer = Buffer.from(imageBase64, 'base64');
+          // Validate buffer is valid image data
+          if (buffer.length === 0) {
+            throw new Error('Empty image buffer');
+          }
+        } catch (decodeError: any) {
+          this.logger.error(`Failed to decode base64 image: ${decodeError.message}`);
+          resolve({ success: false, error: 'Invalid base64 image data' });
+          return;
+        }
+        
+        // Write image buffer to temp file
         writeFileSync(tempImagePath, buffer);
         
-        // Build Python command
-        const pythonScript = join(process.cwd(), 'auth_face_helper.py');
+        // Build Python command - try multiple possible script locations
+        const possibleScriptPaths = [
+          join(process.cwd(), 'auth_face_helper.py'),
+          join(process.cwd(), 'backend', 'auth_face_helper.py'),
+          join(__dirname, '..', '..', 'auth_face_helper.py'),
+        ];
+        
+        let pythonScript = possibleScriptPaths.find(path => existsSync(path));
+        if (!pythonScript) {
+          this.logger.warn('Python face recognition script not found, using fallback');
+          if (existsSync(tempImagePath)) {
+            unlinkSync(tempImagePath);
+          }
+          resolve({ success: false, error: 'Python script not found' });
+          return;
+        }
+        
         const args = [pythonScript, operation, tempImagePath];
         if (patientId) {
           args.push(patientId);
         }
         
-        const python = spawn('python3', args);
-        let output = '';
-        let error = '';
+        // Try python3 first, then python
+        const pythonCommands = ['python3', 'python'];
+        let pythonProcess: any = null;
+        let commandUsed = '';
         
-        python.stdout.on('data', (data) => {
+        for (const cmd of pythonCommands) {
+          try {
+            pythonProcess = spawn(cmd, args, {
+              cwd: process.cwd(),
+              env: { ...process.env, PYTHONUNBUFFERED: '1' },
+            });
+            commandUsed = cmd;
+            break;
+          } catch (spawnError) {
+            continue;
+          }
+        }
+        
+        if (!pythonProcess) {
+          this.logger.warn('Python not found, using fallback');
+          if (existsSync(tempImagePath)) {
+            unlinkSync(tempImagePath);
+          }
+          resolve({ success: false, error: 'Python not installed' });
+          return;
+        }
+        
+        let output = '';
+        let errorOutput = '';
+        const timeout = 30000; // 30 second timeout
+        const timeoutId = setTimeout(() => {
+          pythonProcess.kill();
+          if (existsSync(tempImagePath)) {
+            unlinkSync(tempImagePath);
+          }
+          this.logger.error('Python script timeout');
+          resolve({ success: false, error: 'Python script timeout' });
+        }, timeout);
+        
+        pythonProcess.stdout.on('data', (data: Buffer) => {
           output += data.toString();
         });
         
-        python.stderr.on('data', (data) => {
-          error += data.toString();
+        pythonProcess.stderr.on('data', (data: Buffer) => {
+          errorOutput += data.toString();
         });
         
-        python.on('close', (code) => {
+        pythonProcess.on('close', (code: number) => {
+          clearTimeout(timeoutId);
+          
           // Clean up temp file
           if (existsSync(tempImagePath)) {
-            unlinkSync(tempImagePath);
+            try {
+              unlinkSync(tempImagePath);
+            } catch (cleanupError) {
+              this.logger.warn('Failed to cleanup temp file', cleanupError);
+            }
           }
           
           if (code === 0 && output) {
             try {
               const result = JSON.parse(output.trim());
-              resolve(result);
-            } catch (e) {
+              if (result.error) {
+                this.logger.error(`Python script error: ${result.error}`);
+                resolve({ success: false, error: result.error });
+              } else {
+                resolve(result);
+              }
+            } catch (e: any) {
               this.logger.error('Failed to parse Python output', e);
+              this.logger.debug('Python output:', output);
               resolve({ success: false, error: 'Failed to parse Python output' });
             }
           } else {
-            this.logger.error(`Python script failed: ${error}`);
-            resolve({ success: false, error: error || 'Python script failed' });
+            this.logger.error(`Python script failed with code ${code}: ${errorOutput || 'No error output'}`);
+            resolve({ success: false, error: errorOutput || 'Python script failed' });
           }
         });
         
-        python.on('error', (err) => {
+        pythonProcess.on('error', (err: Error) => {
+          clearTimeout(timeoutId);
           // Clean up temp file
           if (existsSync(tempImagePath)) {
-            unlinkSync(tempImagePath);
+            try {
+              unlinkSync(tempImagePath);
+            } catch (cleanupError) {
+              this.logger.warn('Failed to cleanup temp file', cleanupError);
+            }
           }
           this.logger.error(`Python spawn error: ${err.message}`);
           resolve({ success: false, error: err.message });
@@ -161,7 +322,11 @@ export class FaceRecognitionService {
       } catch (error: any) {
         // Clean up temp file
         if (existsSync(tempImagePath)) {
-          unlinkSync(tempImagePath);
+          try {
+            unlinkSync(tempImagePath);
+          } catch (cleanupError) {
+            this.logger.warn('Failed to cleanup temp file', cleanupError);
+          }
         }
         this.logger.error(`Error running Python script: ${error.message}`);
         resolve({ success: false, error: error.message });
@@ -239,16 +404,18 @@ export class FaceRecognitionService {
     return hash.digest('hex').substring(0, 128); // Return first 128 chars as descriptor
   }
 
-  async getFaceData(userId: string): Promise<UserFaceDocument | null> {
-    return this.userFaceModel.findOne({ userId, isActive: true });
+  async getFaceData(userId: string) {
+    return this.prisma.userFace.findUnique({
+      where: { userId, isActive: true },
+    });
   }
 
   async deleteFace(userId: string): Promise<boolean> {
-    const result = await this.userFaceModel.updateOne(
-      { userId },
-      { isActive: false },
-    );
-    return result.modifiedCount > 0;
+    const result = await this.prisma.userFace.update({
+      where: { userId },
+      data: { isActive: false },
+    });
+    return !!result;
   }
 }
 

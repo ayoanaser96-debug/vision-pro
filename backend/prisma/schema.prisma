@@ -9,3 +9,445 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+enum UserRole {
+  PATIENT
+  ANALYST
+  DOCTOR
+  ADMIN
+  PHARMACY
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum AppointmentType {
+  IN_PERSON
+  VIDEO
+  PHONE
+}
+
+enum TestStatus {
+  PENDING
+  ANALYZING
+  ANALYZED
+  DOCTOR_REVIEW
+  COMPLETED
+}
+
+enum PrescriptionStatus {
+  PENDING
+  PROCESSING
+  READY
+  DELIVERED
+  COMPLETED
+  FILLED
+  CANCELLED
+}
+
+enum CasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  REVIEWED
+  CLOSED
+}
+
+enum NotificationType {
+  ABNORMAL_FINDING
+  FOLLOW_UP_REMINDER
+  PENDING_APPROVAL
+  CASE_ASSIGNED
+  CASE_DELEGATED
+  PRESCRIPTION_READY
+  JOURNEY
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  APPROVE
+  REJECT
+  SIGN
+}
+
+enum DocumentType {
+  ID_CARD
+  PASSPORT
+  DRIVER_LICENSE
+  OTHER
+}
+
+enum JourneyStep {
+  REGISTRATION
+  PAYMENT
+  ANALYST
+  DOCTOR
+  PHARMACY
+  COMPLETED
+}
+
+enum JourneyStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+model User {
+  id            String      @id @default(uuid())
+  email         String      @unique
+  phone         String?     @unique
+  nationalId    String?     @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          UserRole
+  status        UserStatus  @default(ACTIVE)
+  specialty     String?
+  profileImage  String?
+  dateOfBirth   DateTime?
+  address       String?
+  emailVerified Boolean     @default(false)
+  phoneVerified Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  patientProfile    Patient?
+  appointments      Appointment[]
+  doctorAppointments Appointment[] @relation("DoctorAppointments")
+  eyeTests          EyeTest[]
+  doctorEyeTests    EyeTest[]      @relation("DoctorEyeTests")
+  analystEyeTests   EyeTest[]      @relation("AnalystEyeTests")
+  prescriptions     Prescription[]
+  doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
+  pharmacyPrescriptions Prescription[] @relation("PharmacyPrescriptions")
+  cases             Case[]
+  assignedCases     Case[]          @relation("AssignedDoctors")
+  primaryDoctorCases Case[]         @relation("PrimaryDoctor")
+  delegatedCases    Case[]          @relation("DelegatedFrom")
+  notifications     Notification[]
+  sentMessages      ChatMessage[]   @relation("Sender")
+  receivedMessages  ChatMessage[]   @relation("Receiver")
+  auditLogs         AuditLog[]
+  userFace          UserFace?
+  userDocuments     UserDocument[]
+  medicalHistories  MedicalHistory[]
+  doctorMedicalHistories MedicalHistory[] @relation("DoctorMedicalHistories")
+  patientJourney    PatientJourney?
+}
+
+model Patient {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allergies        Json     // Array of allergies
+  chronicConditions Json   // Array of chronic conditions
+  medications      Json     // Array of medications
+  emergencyContacts Json    // Array of {name, relationship, phone}
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Appointment {
+  id             String            @id @default(uuid())
+  patientId      String
+  patient        User              @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId       String?
+  doctor         User?             @relation("DoctorAppointments", fields: [doctorId], references: [id])
+  appointmentDate DateTime
+  appointmentTime String
+  type           AppointmentType   @default(IN_PERSON)
+  status         AppointmentStatus @default(PENDING)
+  reason         String?
+  notes          String?
+  videoLink      String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  notifications  Notification[]
+  chatMessages   ChatMessage[]
+  patientJourney PatientJourney?
+  medicalHistories MedicalHistory[]
+}
+
+model EyeTest {
+  id                String     @id @default(uuid())
+  patientId         String
+  patient           User       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId          String?
+  doctor            User?      @relation("DoctorEyeTests", fields: [doctorId], references: [id])
+  analystId         String?
+  analyst           User?      @relation("AnalystEyeTests", fields: [analystId], references: [id])
+  status            TestStatus @default(PENDING)
+  visualAcuityRight String?
+  visualAcuityLeft  String?
+  colorVisionResult String?
+  refractionRight   Json?      // {sphere, cylinder, axis}
+  refractionLeft    Json?      // {sphere, cylinder, axis}
+  retinaImages      Json       // Array of image URLs/strings
+  aiAnalysis        Json?      // Complex AI analysis object
+  analystNotes      String?
+  doctorNotes       String?
+  doctorApproved    Boolean?
+  rawData           Json?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  prescriptions     Prescription[]
+  cases             Case[]
+  notifications     Notification[]
+}
+
+model Prescription {
+  id              String             @id @default(uuid())
+  patientId       String
+  patient         User               @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId        String
+  doctor          User               @relation("DoctorPrescriptions", fields: [doctorId], references: [id])
+  medications     Json               // Array of medication objects
+  glasses         Json?              // Array of glasses objects
+  notes           String?
+  status          PrescriptionStatus @default(PENDING)
+  pharmacyId      String?
+  pharmacy        User?              @relation("PharmacyPrescriptions", fields: [pharmacyId], references: [id])
+  pharmacyNotes   String?
+  relatedTestId   String?
+  relatedTest     EyeTest?          @relation(fields: [relatedTestId], references: [id])
+  totalAmount      Float?
+  diagnosis       String?
+  metadata        Json?              // Digital signature, QR code, etc.
+  deliveryInfo    Json?              // Delivery tracking info
+  readyAt         DateTime?
+  deliveredAt     DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  notifications   Notification[]
+  patientJourney  PatientJourney?
+}
+
+model PrescriptionTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  specialty   String
+  medications Json     // Array of medication objects
+  glasses     Json?    // Array of glasses objects
+  notes       String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Case {
+  id              String       @id @default(uuid())
+  patientId       String
+  patient         User         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  assignedDoctors User[]       @relation("AssignedDoctors")
+  eyeTestId       String?
+  eyeTest         EyeTest?    @relation(fields: [eyeTestId], references: [id])
+  priority        CasePriority @default(MEDIUM)
+  status          CaseStatus   @default(OPEN)
+  diagnosis       String?
+  timeline        Json         // Array of timeline events
+  aiInsights      Json?        // AI insights object
+  primaryDoctorId String?
+  primaryDoctor   User?        @relation("PrimaryDoctor", fields: [primaryDoctorId], references: [id])
+  delegatedFromId String?
+  delegatedFrom   User?        @relation("DelegatedFrom", fields: [delegatedFromId], references: [id])
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Notification {
+  id                  String             @id @default(uuid())
+  userId              String
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type                NotificationType
+  priority            NotificationPriority @default(MEDIUM)
+  title               String
+  message             String
+  isRead              Boolean            @default(false)
+  relatedTestId       String?
+  relatedTest         EyeTest?           @relation(fields: [relatedTestId], references: [id])
+  relatedPrescriptionId String?
+  relatedPrescription Prescription?     @relation(fields: [relatedPrescriptionId], references: [id])
+  relatedAppointmentId String?
+  relatedAppointment  Appointment?      @relation(fields: [relatedAppointmentId], references: [id])
+  metadata            Json?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model ChatMessage {
+  id            String       @id @default(uuid())
+  senderId      String
+  sender        User         @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId    String
+  receiver      User         @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  message       String
+  isRead        Boolean      @default(false)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model InventoryItem {
+  id              String    @id @default(uuid())
+  name            String
+  genericName     String
+  manufacturer    String
+  stock           Int
+  unit            String
+  expiryDate      DateTime
+  batchNumber     String
+  lotNumber       String
+  purchasePrice   Float
+  sellingPrice    Float
+  reorderLevel    Int?
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id])
+  pharmacyId      String?
+  category        String?
+  alternativeNames Json       // Array of alternative names
+  description     String?
+  barcode         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Supplier {
+  id           String   @id @default(uuid())
+  name         String
+  contactEmail String
+  contactPhone String
+  address      String?
+  rating       Json     // {deliveryTime, reliability, quality, overall}
+  notes        String?
+  pharmacyId   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  inventoryItems InventoryItem[]
+}
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      AuditAction
+  entityType  String
+  entityId    String?
+  description String?
+  changes     Json?       // {before, after}
+  ipAddress   String?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model UserFace {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faceDescriptor String  // Base64 encoded face descriptor/embedding
+  faceImage     String?  // Base64 encoded face image for display
+  confidence    Float?   // Recognition confidence score
+  metadata      Json?    // Age, gender, landmarks, boundingBox
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UserDocument {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentType  DocumentType
+  frontImage    String       // Base64 encoded document image
+  backImage     String?      // For ID cards that have back side
+  extractedData Json?         // Extracted OCR data
+  ocrConfidence Float?        // OCR confidence score
+  metadata      Json?         // Scanner metadata
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model MedicalHistory {
+  id           String       @id @default(uuid())
+  patientId    String
+  patient      User         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  visitDate    DateTime
+  diagnosis    String?
+  symptoms     Json       // Array of symptoms
+  notes        String?
+  doctorId     String?
+  doctor       User?        @relation("DoctorMedicalHistories", fields: [doctorId], references: [id])
+  appointmentId String?
+  appointment  Appointment? @relation(fields: [appointmentId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model PatientJourney {
+  id              String        @id @default(uuid())
+  patientId       String        @unique
+  patient         User          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patientName     String
+  patientEmail    String?
+  patientPhone    String?
+  checkInTime     DateTime      @default(now())
+  checkOutTime    DateTime?
+  steps           Json          // Array of JourneyStepStatus objects
+  overallStatus   JourneyStatus @default(PENDING)
+  currentStep     JourneyStep?
+  appointmentId   String?       @unique
+  appointment     Appointment?  @relation(fields: [appointmentId], references: [id])
+  prescriptionId  String?       @unique
+  prescription    Prescription? @relation(fields: [prescriptionId], references: [id])
+  costs           Json?         // Cost breakdown object
+  receiptGenerated Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model SystemSettings {
+  id           String   @id @default(uuid())
+  settingsKey  String   @unique @default("global")
+  currency     String   @default("USD")
+  language     String   @default("en")
+  theme        String   @default("light")
+  otherSettings Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

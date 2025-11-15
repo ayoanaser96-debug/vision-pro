@@ -1,13 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Appointment, AppointmentDocument } from './schemas/appointment.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { AppointmentStatus } from '@prisma/client';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
-    @InjectModel(Appointment.name)
-    private appointmentModel: Model<AppointmentDocument>,
+    private prisma: PrismaService,
   ) {}
 
   async create(createDto: any) {
@@ -31,65 +29,95 @@ export class AppointmentsService {
         throw new BadRequestException('Patient ID is required');
       }
 
-      // Ensure doctorId is set (optional but validate if provided)
-      if (createDto.doctorId) {
-        // Validate doctorId is a valid ObjectId format
-        if (typeof createDto.doctorId !== 'string' || createDto.doctorId.length !== 24) {
-          throw new BadRequestException('Invalid doctor ID format');
-        }
-      }
-
       // Remove any fields that are not in the schema (like 'urgency')
       const { urgency, ...validData } = createDto;
 
       // Ensure status is valid (default to 'pending' if invalid)
-      const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+      const validStatuses = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
       if (validData.status && !validStatuses.includes(validData.status)) {
-        validData.status = 'pending';
+        validData.status = 'PENDING';
       }
 
-      const appointment = new this.appointmentModel(validData);
-      return await appointment.save();
+      return await this.prisma.appointment.create({
+        data: {
+          ...validData,
+          status: (validData.status || 'PENDING') as AppointmentStatus,
+        },
+      });
     } catch (error: any) {
-      // If it's already a NestJS exception, re-throw it
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
         throw error;
       }
-      // Log the full error for debugging
       console.error('Error creating appointment:', error);
-      // Return a more helpful error message
       const errorMessage = error.message || 'Failed to create appointment';
       throw new BadRequestException(errorMessage);
     }
   }
 
   async findByPatient(patientId: string) {
-    return this.appointmentModel
-      .find({ patientId })
-      .populate('doctorId', 'firstName lastName specialty')
-      .sort({ appointmentDate: -1 });
+    return this.prisma.appointment.findMany({
+      where: { patientId },
+      include: {
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            specialty: true,
+          },
+        },
+      },
+      orderBy: { appointmentDate: 'desc' },
+    });
   }
 
   async findByDoctor(doctorId: string) {
-    return this.appointmentModel
-      .find({ doctorId })
-      .populate('patientId', 'firstName lastName email phone')
-      .sort({ appointmentDate: -1 });
+    return this.prisma.appointment.findMany({
+      where: { doctorId },
+      include: {
+        patient: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: { appointmentDate: 'desc' },
+    });
   }
 
   async findAll() {
-    return this.appointmentModel
-      .find()
-      .populate('patientId', 'firstName lastName email phone')
-      .populate('doctorId', 'firstName lastName specialty')
-      .sort({ appointmentDate: -1 });
+    return this.prisma.appointment.findMany({
+      include: {
+        patient: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+          },
+        },
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            specialty: true,
+          },
+        },
+      },
+      orderBy: { appointmentDate: 'desc' },
+    });
   }
 
   async findById(id: string) {
-    const appointment = await this.appointmentModel
-      .findById(id)
-      .populate('patientId')
-      .populate('doctorId');
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+      include: {
+        patient: true,
+        doctor: true,
+      },
+    });
     if (!appointment) {
       throw new NotFoundException('Appointment not found');
     }
@@ -97,26 +125,37 @@ export class AppointmentsService {
   }
 
   async update(id: string, updateDto: any) {
-    return this.appointmentModel.findByIdAndUpdate(id, updateDto, { new: true });
+    return this.prisma.appointment.update({
+      where: { id },
+      data: updateDto,
+    });
   }
 
   async cancel(id: string) {
-    return this.appointmentModel.findByIdAndUpdate(
-      id,
-      { status: 'cancelled' },
-      { new: true },
-    );
+    return this.prisma.appointment.update({
+      where: { id },
+      data: { status: AppointmentStatus.CANCELLED },
+    });
   }
 
   async getUpcomingByPatient(patientId: string) {
-    return this.appointmentModel
-      .find({
+    return this.prisma.appointment.findMany({
+      where: {
         patientId,
-        appointmentDate: { $gte: new Date() },
-        status: { $in: ['pending', 'confirmed'] },
-      })
-      .populate('doctorId', 'firstName lastName specialty')
-      .sort({ appointmentDate: 1 });
+        appointmentDate: { gte: new Date() },
+        status: { in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
+      },
+      include: {
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            specialty: true,
+          },
+        },
+      },
+      orderBy: { appointmentDate: 'asc' },
+    });
   }
 }
 

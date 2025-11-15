@@ -27,7 +27,8 @@ export default function PatientChatPage() {
   const [loadingContacts, setLoadingContacts] = useState(true);
 
   useEffect(() => {
-    if (!loading && user?.role !== 'patient') {
+    const normalizedRole = user?.role?.toUpperCase() || '';
+    if (!loading && normalizedRole !== 'PATIENT') {
       router.push('/login');
     }
   }, [user, loading, router]);
@@ -81,7 +82,7 @@ export default function PatientChatPage() {
         if (contact) setSelectedContact(contact);
       } else if (emergency || video) {
         // Pick the first doctor contact for quick actions
-        const doctor = contacts.find((c: any) => c.role === 'doctor') || contacts[0];
+        const doctor = contacts.find((c: any) => (c.role || '').toUpperCase() === 'DOCTOR') || contacts[0];
         if (doctor) {
           setSelectedContact(doctor);
           // Send quick system message
@@ -219,7 +220,7 @@ export default function PatientChatPage() {
   };
 
   const getContactDisplayName = (contact: any) => {
-    if (contact.role === 'doctor') {
+    if ((contact.role || '').toUpperCase() === 'DOCTOR') {
       return `Dr. ${contact.firstName} ${contact.lastName}`;
     }
     return `${contact.firstName} ${contact.lastName}`.trim() || contact.role;

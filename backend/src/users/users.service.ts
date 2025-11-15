@@ -1,31 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from './schemas/user.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserRole, UserStatus } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(private prisma: PrismaService) {}
 
-  async findById(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id);
+  async findById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
   }
 
-  async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email });
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
   }
 
-  async findAll(role?: string): Promise<UserDocument[]> {
-    const query = role ? { role } : {};
-    return this.userModel.find(query);
+  async findAll(role?: string) {
+    if (role) {
+      return this.prisma.user.findMany({
+        where: { role: role as UserRole },
+      });
+    }
+    return this.prisma.user.findMany();
   }
 
-  async updateStatus(id: string, status: string): Promise<UserDocument> {
-    return this.userModel.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true },
-    );
+  async updateStatus(id: string, status: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { status: status as UserStatus },
+    });
   }
 }
 

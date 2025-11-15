@@ -1,48 +1,74 @@
 import { Injectable, NotFoundException, Inject, forwardRef, Optional } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Prescription, PrescriptionDocument } from './schemas/prescription.schema';
-import { PrescriptionTemplate, PrescriptionTemplateDocument } from './schemas/prescription-template.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { PrescriptionStatus } from '@prisma/client';
 import { PatientJourneyService } from '../patients/patient-journey.service';
 
 @Injectable()
 export class PrescriptionsService {
   constructor(
-    @InjectModel(Prescription.name)
-    private prescriptionModel: Model<PrescriptionDocument>,
-    @InjectModel(PrescriptionTemplate.name)
-    private templateModel: Model<PrescriptionTemplateDocument>,
+    private prisma: PrismaService,
     @Optional() @Inject(forwardRef(() => PatientJourneyService))
     private patientJourneyService?: PatientJourneyService,
   ) {}
 
   async create(createDto: any) {
-    const prescription = new this.prescriptionModel(createDto);
-    return prescription.save();
+    return this.prisma.prescription.create({
+      data: createDto,
+    });
   }
 
   async findByPatient(patientId: string) {
-    return this.prescriptionModel
-      .find({ patientId })
-      .populate('doctorId', 'firstName lastName specialty')
-      .populate('pharmacyId', 'firstName lastName')
-      .sort({ createdAt: -1 });
+    return this.prisma.prescription.findMany({
+      where: { patientId },
+      include: {
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            specialty: true,
+          },
+        },
+        pharmacy: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findByDoctor(doctorId: string) {
-    return this.prescriptionModel
-      .find({ doctorId })
-      .populate('patientId', 'firstName lastName')
-      .populate('pharmacyId', 'firstName lastName')
-      .sort({ createdAt: -1 });
+    return this.prisma.prescription.findMany({
+      where: { doctorId },
+      include: {
+        patient: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+        pharmacy: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findById(id: string) {
-    const prescription = await this.prescriptionModel
-      .findById(id)
-      .populate('patientId')
-      .populate('doctorId')
-      .populate('pharmacyId');
+    const prescription = await this.prisma.prescription.findUnique({
+      where: { id },
+      include: {
+        patient: true,
+        doctor: true,
+        pharmacy: true,
+      },
+    });
     if (!prescription) {
       throw new NotFoundException('Prescription not found');
     }
@@ -50,35 +76,39 @@ export class PrescriptionsService {
   }
 
   async update(id: string, updateDto: any) {
-    return this.prescriptionModel.findByIdAndUpdate(id, updateDto, { new: true });
+    return this.prisma.prescription.update({
+      where: { id },
+      data: updateDto,
+    });
   }
 
   async assignToPharmacy(id: string, pharmacyId: string) {
-    return this.prescriptionModel.findByIdAndUpdate(
-      id,
-      { pharmacyId, status: 'pending' },
-      { new: true },
-    );
+    return this.prisma.prescription.update({
+      where: { id },
+      data: {
+        pharmacyId,
+        status: PrescriptionStatus.PENDING,
+      },
+    });
   }
 
   async fillPrescription(id: string, notes?: string) {
-    const updated = await this.prescriptionModel.findByIdAndUpdate(
-      id,
-      { status: 'filled', pharmacyNotes: notes },
-      { new: true },
-    ).populate('patientId');
+    const updated = await this.prisma.prescription.update({
+      where: { id },
+      data: {
+        status: PrescriptionStatus.FILLED,
+        pharmacyNotes: notes,
+      },
+      include: {
+        patient: true,
+      },
+    });
     
     // Update patient journey - mark pharmacy step as complete
     if (this.patientJourneyService && updated?.patientId) {
       try {
-        const patientId = typeof updated.patientId === 'string' 
-          ? updated.patientId 
-          : (updated.patientId as any)?._id?.toString() || (updated.patientId as any)?.id?.toString();
-        if (patientId) {
-          await this.patientJourneyService.markPharmacyComplete(patientId, undefined, id);
-        }
-      } catch (error) {
-        // Journey might not exist, that's okay
+        await this.patientJourneyService.markPharmacyComplete(updated.patientId, undefined, id);
+      } catch (error: any) {
         console.log('Journey update skipped:', error.message);
       }
     }
@@ -168,17 +198,22 @@ export class PrescriptionsService {
 
   async getTemplates(specialty?: string) {
     try {
-      const query = specialty ? { specialty } : {};
-      let templates = await this.templateModel.find(query).sort({ name: 1 });
+      const where = specialty ? { specialty } : {};
+      let templates = await this.prisma.prescriptionTemplate.findMany({
+        where,
+        orderBy: { name: 'asc' },
+      });
       
       // If no templates exist, create default templates
       if (templates.length === 0) {
         try {
           await this.createDefaultTemplates();
-          templates = await this.templateModel.find(query).sort({ name: 1 });
+          templates = await this.prisma.prescriptionTemplate.findMany({
+            where,
+            orderBy: { name: 'asc' },
+          });
         } catch (error) {
           console.error('Error creating default templates:', error);
-          // Return empty array if default templates fail to create
           return [];
         }
       }
@@ -192,7 +227,6 @@ export class PrescriptionsService {
 
   private async createDefaultTemplates() {
     const defaultTemplates = [
-      // Medication Templates
       {
         name: 'Dry Eye Treatment',
         specialty: 'General Ophthalmology',
@@ -270,7 +304,6 @@ export class PrescriptionsService {
         ],
         notes: 'Avoid allergens. Cool compress may help reduce irritation.',
       },
-      // Glasses Templates
       {
         name: 'Single Vision Glasses',
         specialty: 'Refractive Error',
@@ -378,13 +411,20 @@ export class PrescriptionsService {
     try {
       for (const template of defaultTemplates) {
         try {
-          const existing = await this.templateModel.findOne({ name: template.name });
+          const existing = await this.prisma.prescriptionTemplate.findFirst({
+            where: { name: template.name },
+          });
           if (!existing) {
-            await this.templateModel.create(template);
+            await this.prisma.prescriptionTemplate.create({
+              data: {
+                ...template,
+                medications: template.medications as any,
+                glasses: template.glasses as any,
+              },
+            });
           }
         } catch (error) {
           console.error(`Error creating template "${template.name}":`, error);
-          // Continue with next template if one fails
         }
       }
     } catch (error) {
@@ -395,8 +435,9 @@ export class PrescriptionsService {
 
   async createTemplate(templateData: any) {
     try {
-      const template = new this.templateModel(templateData);
-      return await template.save();
+      return await this.prisma.prescriptionTemplate.create({
+        data: templateData,
+      });
     } catch (error) {
       console.error('Error creating template:', error);
       throw error;
@@ -404,7 +445,9 @@ export class PrescriptionsService {
   }
 
   async getTemplateById(id: string) {
-    const template = await this.templateModel.findById(id);
+    const template = await this.prisma.prescriptionTemplate.findUnique({
+      where: { id },
+    });
     if (!template) {
       throw new NotFoundException('Template not found');
     }
@@ -412,17 +455,24 @@ export class PrescriptionsService {
   }
 
   async signPrescription(id: string, signature: string, doctorId: string) {
-    return this.prescriptionModel.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          'metadata.digitalSignature': signature,
-          'metadata.signedBy': doctorId,
-          'metadata.signedAt': new Date(),
-        },
+    const existing = await this.prisma.prescription.findUnique({
+      where: { id },
+    });
+    
+    if (!existing) {
+      throw new NotFoundException('Prescription not found');
+    }
+
+    const metadata = (existing.metadata as any) || {};
+    metadata.digitalSignature = signature;
+    metadata.signedBy = doctorId;
+    metadata.signedAt = new Date();
+
+    return this.prisma.prescription.update({
+      where: { id },
+      data: {
+        metadata: metadata as any,
       },
-      { new: true },
-    );
+    });
   }
 }
-

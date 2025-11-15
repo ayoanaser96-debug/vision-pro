@@ -16,6 +16,7 @@ import { PatientJourneyService } from './patient-journey.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { JourneyStep, JourneyStatus } from '@prisma/client';
 
 @Controller('patients')
 @UseGuards(JwtAuthGuard)
@@ -140,7 +141,6 @@ export class PatientsController {
     @Request() req,
     @Body() body: { patientId: string; notes?: string },
   ) {
-    const { JourneyStep, JourneyStatus } = await import('./schemas/patient-journey.schema');
     return this.patientJourneyService.updateStep(
       body.patientId,
       step as any,

@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { ChatMessage, ChatMessageDocument } from './schemas/chat-message.schema';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ChatService {
   constructor(
-    @InjectModel(ChatMessage.name)
-    private chatMessageModel: Model<ChatMessageDocument>,
+    private prisma: PrismaService,
   ) {}
 
   async saveMessage(data: {
@@ -16,30 +13,41 @@ export class ChatService {
     message: string;
     appointmentId?: string;
   }) {
-    const message = new this.chatMessageModel(data);
-    return message.save();
+    return this.prisma.chatMessage.create({
+      data,
+    });
   }
 
   async getConversation(user1Id: string, user2Id: string) {
-    return this.chatMessageModel
-      .find({
-        $or: [
+    return this.prisma.chatMessage.findMany({
+      where: {
+        OR: [
           { senderId: user1Id, receiverId: user2Id },
           { senderId: user2Id, receiverId: user1Id },
         ],
-      })
-      .populate('senderId', 'firstName lastName')
-      .populate('receiverId', 'firstName lastName')
-      .sort({ createdAt: 1 });
+      },
+      include: {
+        sender: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+        receiver: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
   }
 
   async markAsRead(messageId: string) {
-    return this.chatMessageModel.findByIdAndUpdate(
-      messageId,
-      { isRead: true },
-      { new: true },
-    );
+    return this.prisma.chatMessage.update({
+      where: { id: messageId },
+      data: { isRead: true },
+    });
   }
 }
-
-

@@ -1,46 +1,55 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Patient, PatientDocument } from './schemas/patient.schema';
-import { MedicalHistory, MedicalHistoryDocument } from './schemas/medical-history.schema';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PatientsService {
   constructor(
-    @InjectModel(Patient.name) private patientModel: Model<PatientDocument>,
-    @InjectModel(MedicalHistory.name) private historyModel: Model<MedicalHistoryDocument>,
+    private prisma: PrismaService,
   ) {}
 
   async getPatientProfile(userId: string) {
-    return this.patientModel.findOne({ userId }).populate('userId');
+    return this.prisma.patient.findUnique({
+      where: { userId },
+      include: { user: true },
+    });
   }
 
   async updatePatientProfile(userId: string, data: any) {
-    return this.patientModel.findOneAndUpdate(
-      { userId },
-      { userId, ...data },
-      { upsert: true, new: true },
-    );
+    return this.prisma.patient.upsert({
+      where: { userId },
+      update: data,
+      create: { userId, ...data },
+    });
   }
 
   async createOrUpdatePatient(userId: string, data: any) {
-    return this.patientModel.findOneAndUpdate(
-      { userId },
-      { userId, ...data },
-      { upsert: true, new: true },
-    );
+    return this.prisma.patient.upsert({
+      where: { userId },
+      update: data,
+      create: { userId, ...data },
+    });
   }
 
   async getMedicalHistory(patientId: string) {
-    return this.historyModel
-      .find({ patientId })
-      .populate('doctorId', 'firstName lastName specialty')
-      .sort({ visitDate: -1 });
+    return this.prisma.medicalHistory.findMany({
+      where: { patientId },
+      include: {
+        doctor: {
+          select: {
+            firstName: true,
+            lastName: true,
+            specialty: true,
+          },
+        },
+      },
+      orderBy: { visitDate: 'desc' },
+    });
   }
 
   async addMedicalHistory(data: any) {
-    const history = new this.historyModel(data);
-    return history.save();
+    return this.prisma.medicalHistory.create({
+      data,
+    });
   }
 }
 

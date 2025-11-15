@@ -1,21 +1,16 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { PharmacyController } from './pharmacy.controller';
 import { PharmacyService } from './pharmacy.service';
 import { PharmacyEnhancedService } from './pharmacy-enhanced.service';
 import { PrescriptionsModule } from '../prescriptions/prescriptions.module';
-import { Prescription, PrescriptionSchema } from '../prescriptions/schemas/prescription.schema';
-import { InventoryItem, InventoryItemSchema } from './schemas/inventory-item.schema';
-import { Supplier, SupplierSchema } from './schemas/supplier.schema';
+import { PrismaModule } from '../prisma/prisma.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Prescription.name, schema: PrescriptionSchema },
-      { name: InventoryItem.name, schema: InventoryItemSchema },
-      { name: Supplier.name, schema: SupplierSchema },
-    ]),
+    PrismaModule,
     PrescriptionsModule,
+    NotificationsModule,
   ],
   controllers: [PharmacyController],
   providers: [PharmacyService, PharmacyEnhancedService],

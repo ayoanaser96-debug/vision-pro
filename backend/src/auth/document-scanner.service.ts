@@ -1,13 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { UserDocument, UserDocumentDocument, DocumentType } from './schemas/user-document.schema';
+import { PrismaService } from '../prisma/prisma.service';
+import { DocumentType } from '@prisma/client';
 
 @Injectable()
 export class DocumentScannerService {
   constructor(
-    @InjectModel(UserDocument.name)
-    private userDocumentModel: Model<UserDocumentDocument>,
+    private prisma: PrismaService,
   ) {}
 
   async scanDocument(
@@ -15,7 +13,7 @@ export class DocumentScannerService {
     documentType: DocumentType,
     frontImage: string,
     backImage?: string,
-  ): Promise<UserDocumentDocument> {
+  ) {
     try {
       // Process front image
       const frontProcessed = await this.preprocessImage(frontImage);
@@ -38,41 +36,48 @@ export class DocumentScannerService {
       const ocrConfidence = this.calculateConfidence(extractedData);
 
       // Check if document already exists
-      const existing = await this.userDocumentModel.findOne({
-        userId,
-        documentType,
-        isActive: true,
+      const existing = await this.prisma.userDocument.findFirst({
+        where: {
+          userId,
+          documentType,
+          isActive: true,
+        },
       });
 
       if (existing) {
         // Update existing document
-        existing.frontImage = frontImage;
-        if (backImage) existing.backImage = backImage;
-        existing.extractedData = extractedData;
-        existing.ocrConfidence = ocrConfidence;
-        existing.metadata = {
-          ...existing.metadata,
-          scannedAt: new Date(),
-          imageQuality: this.assessImageQuality(frontImage),
-        };
-        return existing.save();
+        return this.prisma.userDocument.update({
+          where: { id: existing.id },
+          data: {
+            frontImage,
+            backImage: backImage || existing.backImage,
+            extractedData: extractedData as any,
+            ocrConfidence,
+            metadata: {
+              ...(existing.metadata as any || {}),
+              scannedAt: new Date(),
+              imageQuality: this.assessImageQuality(frontImage),
+            } as any,
+          },
+        });
       } else {
         // Create new document
-        const userDocument = new this.userDocumentModel({
-          userId,
-          documentType,
-          frontImage,
-          backImage,
-          extractedData,
-          ocrConfidence,
-          metadata: {
-            scannedAt: new Date(),
-            imageQuality: this.assessImageQuality(frontImage),
-            verified: false,
+        return this.prisma.userDocument.create({
+          data: {
+            userId,
+            documentType,
+            frontImage,
+            backImage,
+            extractedData: extractedData as any,
+            ocrConfidence,
+            metadata: {
+              scannedAt: new Date(),
+              imageQuality: this.assessImageQuality(frontImage),
+              verified: false,
+            } as any,
+            isActive: true,
           },
-          isActive: true,
         });
-        return userDocument.save();
       }
     } catch (error: any) {
       throw new Error(`Failed to scan document: ${error.message}`);
@@ -199,27 +204,40 @@ export class DocumentScannerService {
     }
   }
 
-  async getDocuments(userId: string): Promise<UserDocumentDocument[]> {
-    return this.userDocumentModel.find({ userId, isActive: true }).sort({ createdAt: -1 });
+  async getDocuments(userId: string) {
+    return this.prisma.userDocument.findMany({
+      where: { userId, isActive: true },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  async getDocument(userId: string, documentType: DocumentType): Promise<UserDocumentDocument | null> {
-    return this.userDocumentModel.findOne({ userId, documentType, isActive: true });
+  async getDocument(userId: string, documentType: DocumentType) {
+    return this.prisma.userDocument.findFirst({
+      where: { userId, documentType, isActive: true },
+    });
   }
 
   async verifyDocument(
     documentId: string,
     verifiedBy: string,
-  ): Promise<UserDocumentDocument | null> {
-    return this.userDocumentModel.findByIdAndUpdate(
-      documentId,
-      {
-        'metadata.verified': true,
-        'metadata.verifiedBy': verifiedBy,
-        'metadata.verifiedAt': new Date(),
+  ) {
+    const existing = await this.prisma.userDocument.findUnique({
+      where: { id: documentId },
+    });
+    
+    if (!existing) return null;
+
+    return this.prisma.userDocument.update({
+      where: { id: documentId },
+      data: {
+        metadata: {
+          ...(existing.metadata as any || {}),
+          verified: true,
+          verifiedBy,
+          verifiedAt: new Date(),
+        } as any,
       },
-      { new: true },
-    );
+    });
   }
 }
 
