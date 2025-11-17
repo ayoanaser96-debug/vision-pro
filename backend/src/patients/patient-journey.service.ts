@@ -28,7 +28,7 @@ export class PatientJourneyService {
       const steps = [
         { step: JourneyStep.REGISTRATION, status: JourneyStatus.COMPLETED, completedAt: new Date() },
         { step: JourneyStep.PAYMENT, status: JourneyStatus.PENDING },
-        { step: JourneyStep.ANALYST, status: JourneyStatus.PENDING },
+        { step: JourneyStep.OPTOMETRIST, status: JourneyStatus.PENDING },
         { step: JourneyStep.DOCTOR, status: JourneyStatus.PENDING },
         { step: JourneyStep.PHARMACY, status: JourneyStatus.PENDING },
       ];
@@ -37,7 +37,7 @@ export class PatientJourneyService {
       const costs = {
         registration: 0,
         payment: 100,
-        analyst: 50,
+        optometrist: 50,
         doctor: 150,
         pharmacy: 75,
         total: 375,
@@ -123,7 +123,7 @@ export class PatientJourneyService {
         const stepNames: Record<JourneyStep, string> = {
           [JourneyStep.REGISTRATION]: 'Registration',
           [JourneyStep.PAYMENT]: 'Payment',
-          [JourneyStep.ANALYST]: 'Eye Test & Analysis',
+          [JourneyStep.OPTOMETRIST]: 'Eye Test & Analysis',
           [JourneyStep.DOCTOR]: 'Doctor Consultation',
           [JourneyStep.PHARMACY]: 'Pharmacy',
           [JourneyStep.COMPLETED]: 'Completed',
@@ -131,8 +131,8 @@ export class PatientJourneyService {
         
         const nextStepMessages: Record<JourneyStep, string> = {
           [JourneyStep.REGISTRATION]: 'Please proceed to the Finance counter for payment.',
-          [JourneyStep.PAYMENT]: 'Payment completed! Please proceed to the Analyst station for eye testing.',
-          [JourneyStep.ANALYST]: 'Eye test completed! Please proceed to see the Doctor.',
+          [JourneyStep.PAYMENT]: 'Payment completed! Please proceed to the Optometrist station for eye testing.',
+          [JourneyStep.OPTOMETRIST]: 'Eye test completed! Please proceed to see the Doctor.',
           [JourneyStep.DOCTOR]: 'Consultation completed! Please proceed to the Pharmacy.',
           [JourneyStep.PHARMACY]: 'All steps completed! Please collect your receipt.',
           [JourneyStep.COMPLETED]: '',
@@ -209,8 +209,8 @@ export class PatientJourneyService {
     return this.updateStep(patientId, JourneyStep.PAYMENT, JourneyStatus.COMPLETED, staffId);
   }
 
-  async markAnalystComplete(patientId: string, staffId?: string) {
-    return this.updateStep(patientId, JourneyStep.ANALYST, JourneyStatus.COMPLETED, staffId);
+  async markOptometristComplete(patientId: string, staffId?: string) {
+    return this.updateStep(patientId, JourneyStep.OPTOMETRIST, JourneyStatus.COMPLETED, staffId);
   }
 
   async markDoctorComplete(patientId: string, staffId?: string, appointmentId?: string) {

@@ -51,7 +51,7 @@ interface PatientJourney {
   costs?: {
     registration?: number;
     payment?: number;
-    analyst?: number;
+    optometrist?: number;
     doctor?: number;
     pharmacy?: number;
     total?: number;
@@ -75,7 +75,7 @@ const stepConfig = [
     color: 'bg-green-500',
   },
   {
-    key: 'analyst',
+    key: 'optometrist',
     title: 'Eye Test & Analysis',
     icon: TestTube,
     description: 'Vision testing and analysis',
@@ -485,7 +485,7 @@ export default function PatientJourneyPage() {
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Eye Test & Analysis:</span>
-                              <span>${journey.costs.analyst || 0}</span>
+                              <span>${journey.costs.optometrist || 0}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Doctor Consultation:</span>
@@ -517,7 +517,7 @@ Check-out: ${res.data.checkOutTime ? new Date(res.data.checkOutTime).toLocaleStr
 Services:
 - Registration: $${res.data.costs?.registration || 0}
 - Payment/Finance: $${res.data.costs?.payment || 0}
-- Eye Test & Analysis: $${res.data.costs?.analyst || 0}
+- Eye Test & Analysis: $${res.data.costs?.optometrist || 0}
 - Doctor Consultation: $${res.data.costs?.doctor || 0}
 - Pharmacy: $${res.data.costs?.pharmacy || 0}
 
@@ -588,7 +588,7 @@ Thank you for visiting Vision Smart Clinic!
             <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
               <li>Check in at the registration desk when you arrive</li>
               <li>Complete payment at the finance counter</li>
-              <li>Proceed to the analyst station for eye testing</li>
+              <li>Proceed to the optometrist station for eye testing</li>
               <li>Meet with the doctor for consultation</li>
               <li>Collect your prescription from the pharmacy</li>
             </ol>

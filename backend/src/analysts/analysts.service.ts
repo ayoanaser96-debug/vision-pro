@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EyeTestsService } from '../eye-tests/eye-tests.service';
 
 @Injectable()
-export class AnalystsService {
+export class OptometristsService {
   constructor(private eyeTestsService: EyeTestsService) {}
 
   async getPendingTests() {
@@ -13,8 +13,8 @@ export class AnalystsService {
     return this.eyeTestsService.runAIAnalysis(testId);
   }
 
-  async addNotes(testId: string, notes: string, analystId: string) {
-    return this.eyeTestsService.addAnalystNotes(testId, notes, analystId);
+  async addNotes(testId: string, notes: string, optometristId: string) {
+    return this.eyeTestsService.addOptometristNotes(testId, notes, optometristId);
   }
 }
 

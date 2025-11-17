@@ -49,12 +49,12 @@ export default function LoginPage() {
         // Role mapping with both uppercase and lowercase support
         const roleMap: Record<string, string> = {
           PATIENT: '/dashboard/patient',
-          ANALYST: '/dashboard/analyst',
+          OPTOMETRIST: '/dashboard/optometrist',
           DOCTOR: '/dashboard/doctor',
           ADMIN: '/dashboard/admin',
           PHARMACY: '/dashboard/pharmacy',
           patient: '/dashboard/patient',
-          analyst: '/dashboard/analyst',
+          optometrist: '/dashboard/optometrist',
           doctor: '/dashboard/doctor',
           admin: '/dashboard/admin',
           pharmacy: '/dashboard/pharmacy',
@@ -118,12 +118,12 @@ export default function LoginPage() {
         // Role mapping with both uppercase and lowercase support
         const roleMap: Record<string, string> = {
           PATIENT: '/dashboard/patient',
-          ANALYST: '/dashboard/analyst',
+          OPTOMETRIST: '/dashboard/optometrist',
           DOCTOR: '/dashboard/doctor',
           ADMIN: '/dashboard/admin',
           PHARMACY: '/dashboard/pharmacy',
           patient: '/dashboard/patient',
-          analyst: '/dashboard/analyst',
+          optometrist: '/dashboard/optometrist',
           doctor: '/dashboard/doctor',
           admin: '/dashboard/admin',
           pharmacy: '/dashboard/pharmacy',
@@ -136,9 +136,14 @@ export default function LoginPage() {
         window.location.href = redirectPath;
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+      const errorDetails = error.response?.data?.error || error.response?.data;
+      console.error('Error details:', errorDetails);
+      
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'An error occurred',
+        description: errorMessage + (errorDetails ? ` (${JSON.stringify(errorDetails)})` : ''),
         variant: 'destructive',
       });
     } finally {
@@ -523,7 +528,7 @@ export default function LoginPage() {
                     >
                       <option value="patient">Patient</option>
                       <option value="doctor">Doctor</option>
-                      <option value="analyst">Analyst</option>
+                      <option value="optometrist">Optometrist</option>
                       <option value="pharmacy">Pharmacy</option>
                       <option value="admin">Admin</option>
                     </select>

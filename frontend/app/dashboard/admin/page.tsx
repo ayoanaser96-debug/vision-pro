@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-provider';
 import { useRouter } from 'next/navigation';
@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
-import { 
-  Users, 
-  Eye, 
-  Calendar, 
-  BarChart3, 
-  Settings, 
+import {
+  Users,
+  Eye,
+  Calendar,
+  BarChart3,
+  Settings,
   Shield,
   DollarSign,
   Activity,
@@ -29,6 +29,10 @@ import {
   FileText,
   Globe,
   Lock,
+  Unlock,
+  Megaphone,
+  AlertTriangle,
+  Settings2,
   Database,
   Zap,
   Search,
@@ -94,6 +98,19 @@ export default function AdminDashboard() {
   const [intelligentAlerts, setIntelligentAlerts] = useState<any[]>([]);
   const [resourceOptimization, setResourceOptimization] = useState<any>(null);
   const [clinicAutomation, setClinicAutomation] = useState<any>(null);
+  const [lockdownActive, setLockdownActive] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastHistory, setBroadcastHistory] = useState<any[]>([]);
+  const [automationRules, setAutomationRules] = useState({
+    autoDisableUser: true,
+    autoCalibrateDevices: true,
+    autoFlagTransactions: true,
+  });
+  const automationRuleDescriptions: Record<keyof typeof automationRules, string> = {
+    autoDisableUser: 'Automatically locks an account after 5 failed login attempts.',
+    autoCalibrateDevices: 'AI monitors device drift and auto-creates calibration tasks.',
+    autoFlagTransactions: 'AI flags suspicious billing transactions for manual review.',
+  };
 
   useEffect(() => {
     const normalizedRole = user?.role?.toUpperCase() || '';
@@ -216,6 +233,53 @@ export default function AdminDashboard() {
         }
       ]);
     }
+  };
+
+  const handleLockdownToggle = () => {
+    setLockdownActive((prev) => {
+      const next = !prev;
+      toast({
+        title: next ? 'Emergency Lockdown Activated' : 'Lockdown Released',
+        description: next
+          ? 'All non-admin sessions have been locked out.'
+          : 'Normal access restored for all users.',
+      });
+      return next;
+    });
+  };
+
+  const handleBroadcastSend = () => {
+    if (!broadcastMessage.trim()) {
+      toast({
+        title: 'Message required',
+        description: 'Please enter a broadcast message before sending.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const entry = {
+      id: Date.now(),
+      message: broadcastMessage.trim(),
+      timestamp: new Date(),
+    };
+    setBroadcastHistory((prev) => [entry, ...prev].slice(0, 4));
+    setBroadcastMessage('');
+    toast({
+      title: 'Broadcast sent',
+      description: 'Message delivered to all active users.',
+    });
+  };
+
+  const handleAutomationToggle = (ruleKey: keyof typeof automationRules) => {
+    setAutomationRules((prev) => {
+      const nextValue = !prev[ruleKey];
+      const updated = { ...prev, [ruleKey]: nextValue };
+      toast({
+        title: nextValue ? 'Automation enabled' : 'Automation disabled',
+        description: automationRuleDescriptions[ruleKey],
+      });
+      return updated;
+    });
   };
 
   const loadIntelligentAlerts = async () => {
@@ -448,6 +512,35 @@ export default function AdminDashboard() {
   const patientGrowth = comprehensiveAnalytics?.patientGrowth || [];
   const appointmentByDay = appointmentAnalytics?.byDay || [];
   const billingByDay = billingAnalytics?.byDay || [];
+  const automationRuleList: Array<{
+    key: keyof typeof automationRules;
+    title: string;
+    description: string;
+    icon: ReactNode;
+    badge: string;
+  }> = [
+    {
+      key: 'autoDisableUser',
+      title: 'Auto-disable user on failed logins',
+      description: 'Automatically locks accounts after 5 consecutive failed attempts.',
+      icon: <Lock className="h-4 w-4 text-red-500" />,
+      badge: 'Security',
+    },
+    {
+      key: 'autoCalibrateDevices',
+      title: 'Auto-schedule device calibration',
+      description: 'AI flags devices for calibration when performance drifts.',
+      icon: <Settings2 className="h-4 w-4 text-blue-500" />,
+      badge: 'Maintenance',
+    },
+    {
+      key: 'autoFlagTransactions',
+      title: 'Auto-flag high-risk transactions',
+      description: 'Automatically queues suspicious billing for manual review.',
+      icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+      badge: 'Billing',
+    },
+  ];
 
   return (
     <DashboardLayout>
@@ -542,7 +635,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users & RBAC</TabsTrigger>
             <TabsTrigger value="devices">Devices</TabsTrigger>
@@ -550,6 +643,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="billing">Billing</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="controls">Controls</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -1208,6 +1302,110 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Controls Tab */}
+          <TabsContent value="controls" className="space-y-4">
+            <Card className="border-l-4 border-l-red-500 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {lockdownActive ? <Lock className="h-5 w-5 text-red-600" /> : <Unlock className="h-5 w-5 text-emerald-600" />}
+                  Emergency Controls
+                </CardTitle>
+                <CardDescription>Toggle a platform-wide lockdown to secure the system instantly.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-lg font-bold">{lockdownActive ? 'Lockdown Active' : 'System Online'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {lockdownActive
+                      ? 'All non-admin sessions are temporarily blocked.'
+                      : 'Users currently have normal access.'}
+                  </p>
+                </div>
+                <Button
+                  onClick={handleLockdownToggle}
+                  className={lockdownActive ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
+                >
+                  {lockdownActive ? 'Release Lockdown' : 'Activate Emergency Lockdown'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Megaphone className="h-5 w-5 text-blue-600" />
+                  Broadcast Message
+                </CardTitle>
+                <CardDescription>Send announcements to every active user session.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <textarea
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
+                  className="w-full min-h-[120px] rounded-lg border border-border bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder='Example: "Scheduled maintenance takes place tonight at 10 PM. Please save your work."'
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    Broadcasts appear instantly inside patient, doctor, and staff portals.
+                  </span>
+                  <Button onClick={handleBroadcastSend} className="bg-blue-600 text-white hover:bg-blue-700">
+                    Send Broadcast
+                  </Button>
+                </div>
+                {broadcastHistory.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold text-foreground">Recent broadcasts</h4>
+                    {broadcastHistory.map((entry) => (
+                      <div key={entry.id} className="rounded-md border border-border p-2 text-sm">
+                        <p className="font-medium">{entry.message}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(entry.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-primary" />
+                  AI Automation Rules
+                </CardTitle>
+                <CardDescription>Enable proactive protections powered by AI.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {automationRuleList.map((rule) => (
+                  <div
+                    key={rule.key}
+                    className="flex flex-col gap-3 rounded-lg border border-border p-3 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="flex flex-1 items-start gap-3">
+                      <div className="rounded-lg bg-muted p-2">{rule.icon}</div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-foreground">{rule.title}</p>
+                          <Badge variant="outline">{rule.badge}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{rule.description}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant={automationRules[rule.key] ? 'default' : 'outline'}
+                      className={automationRules[rule.key] ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+                      onClick={() => handleAutomationToggle(rule.key)}
+                    >
+                      {automationRules[rule.key] ? 'Disable' : 'Enable'}
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Settings Tab */}

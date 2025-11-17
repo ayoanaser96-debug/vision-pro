@@ -127,7 +127,7 @@ export class PatientsController {
 
   @Get('journey/active')
   @UseGuards(RolesGuard)
-  @Roles('admin', 'analyst', 'doctor', 'pharmacy')
+  @Roles('ADMIN', 'OPTOMETRIST', 'DOCTOR', 'PHARMACY')
   async getAllActiveJourneys() {
     const journeys = await this.patientJourneyService.getAllActiveJourneys();
     return journeys;
@@ -135,7 +135,7 @@ export class PatientsController {
 
   @Post('journey/:step/complete')
   @UseGuards(RolesGuard)
-  @Roles('admin', 'analyst', 'doctor', 'pharmacy')
+  @Roles('ADMIN', 'OPTOMETRIST', 'DOCTOR', 'PHARMACY')
   async markStepComplete(
     @Param('step') step: string,
     @Request() req,

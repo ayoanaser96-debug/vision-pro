@@ -20,7 +20,7 @@ export class EyeTest {
   doctorId?: MongooseSchema.Types.ObjectId;
 
   @Prop({ required: false, type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  analystId?: MongooseSchema.Types.ObjectId;
+  optometristId?: MongooseSchema.Types.ObjectId;
 
   @Prop({ enum: TestStatus, default: TestStatus.PENDING })
   status: TestStatus;
@@ -76,9 +76,9 @@ export class EyeTest {
     overallAssessment: string;
   };
 
-  // Analyst Notes
+  // Optometrist Notes
   @Prop({ required: false })
-  analystNotes?: string;
+  optometristNotes?: string;
 
   // Doctor Review
   @Prop({ required: false })

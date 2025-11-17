@@ -28,7 +28,7 @@ export class EyeTestsController {
 
   @Get('my-tests')
   async getMyTests(@Request() req) {
-    if (req.user.role === 'patient') {
+    if (req.user.role?.toUpperCase() === 'PATIENT') {
       return this.eyeTestsService.findByPatient(req.user.id);
     }
     return [];
@@ -36,16 +36,16 @@ export class EyeTestsController {
 
   @Get('pending-analysis')
   @UseGuards(RolesGuard)
-  @Roles('analyst', 'admin')
+  @Roles('OPTOMETRIST', 'ADMIN')
   async getPendingTests() {
     return this.eyeTestsService.findPendingForAnalysis();
   }
 
   @Get('for-doctor')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async getTestsForDoctor(@Request() req) {
-    return this.eyeTestsService.findAnalyzedForDoctor(req.user.role === 'doctor' ? req.user.id : undefined);
+    return this.eyeTestsService.findAnalyzedForDoctor(req.user.role?.toUpperCase() === 'DOCTOR' ? req.user.id : undefined);
   }
 
   @Get(':id')
@@ -55,21 +55,21 @@ export class EyeTestsController {
 
   @Post(':id/analyze')
   @UseGuards(RolesGuard)
-  @Roles('analyst', 'admin')
+  @Roles('OPTOMETRIST', 'ADMIN')
   async analyzeTest(@Param('id') id: string) {
     return this.eyeTestsService.runAIAnalysis(id);
   }
 
-  @Put(':id/analyst-notes')
+  @Put(':id/optometrist-notes')
   @UseGuards(RolesGuard)
-  @Roles('analyst', 'admin')
-  async addAnalystNotes(@Param('id') id: string, @Request() req, @Body() body: { notes: string }) {
-    return this.eyeTestsService.addAnalystNotes(id, body.notes, req.user.id);
+  @Roles('OPTOMETRIST', 'ADMIN')
+  async addOptometristNotes(@Param('id') id: string, @Request() req, @Body() body: { notes: string }) {
+    return this.eyeTestsService.addOptometristNotes(id, body.notes, req.user.id);
   }
 
   @Put(':id/doctor-review')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async doctorReview(@Param('id') id: string, @Request() req, @Body() review: any) {
     return this.eyeTestsService.doctorReview(id, {
       ...review,

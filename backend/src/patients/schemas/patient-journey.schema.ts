@@ -6,7 +6,7 @@ export type PatientJourneyDocument = PatientJourney & Document;
 export enum JourneyStep {
   REGISTRATION = 'registration',
   PAYMENT = 'payment',
-  ANALYST = 'analyst',
+  OPTOMETRIST = 'optometrist',
   DOCTOR = 'doctor',
   PHARMACY = 'pharmacy',
   COMPLETED = 'completed',
@@ -85,7 +85,7 @@ export class PatientJourney {
   costs?: {
     registration?: number;
     payment?: number;
-    analyst?: number;
+    optometrist?: number;
     doctor?: number;
     pharmacy?: number;
     total?: number;

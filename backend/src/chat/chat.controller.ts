@@ -109,7 +109,7 @@ export class ChatController {
     } else if (userRole === UserRole.PATIENT) {
       const [doctors, prescriptions] = await Promise.all([
         this.prisma.user.findMany({
-          where: { role: { in: [UserRole.DOCTOR, UserRole.ANALYST] } },
+          where: { role: { in: [UserRole.DOCTOR, UserRole.OPTOMETRIST] } },
           take: 10,
         }),
         this.prisma.prescription.findMany({

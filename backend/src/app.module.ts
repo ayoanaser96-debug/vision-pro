@@ -8,7 +8,7 @@ import { UsersModule } from './users/users.module';
 import { PatientsModule } from './patients/patients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { EyeTestsModule } from './eye-tests/eye-tests.module';
-import { AnalystsModule } from './analysts/analysts.module';
+import { OptometristsModule } from './analysts/analysts.module';
 import { DoctorsModule } from './doctors/doctors.module';
 import { AdminModule } from './admin/admin.module';
 import { PrescriptionsModule } from './prescriptions/prescriptions.module';
@@ -32,7 +32,7 @@ import { FaceRecognitionModule } from './face-recognition/face-recognition.modul
     PatientsModule,
     AppointmentsModule,
     EyeTestsModule,
-    AnalystsModule,
+    OptometristsModule,
     DoctorsModule,
     AdminModule,
     PrescriptionsModule,

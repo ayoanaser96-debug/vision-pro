@@ -11,7 +11,7 @@ export class AnalyticsController {
 
   @Get('doctor-performance')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async getDoctorPerformance(
     @Request() req,
     @Query('startDate') startDate?: string,
@@ -26,7 +26,7 @@ export class AnalyticsController {
 
   @Get('doctor-performance/:doctorId')
   @UseGuards(RolesGuard)
-  @Roles('admin')
+  @Roles('ADMIN')
   async getDoctorPerformanceById(
     @Param('doctorId') doctorId: string,
     @Query('startDate') startDate?: string,
@@ -41,7 +41,7 @@ export class AnalyticsController {
 
   @Get('clinic-insights')
   @UseGuards(RolesGuard)
-  @Roles('admin', 'doctor')
+  @Roles('ADMIN', 'DOCTOR')
   async getClinicInsights(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,

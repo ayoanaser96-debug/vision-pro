@@ -21,9 +21,10 @@ export class PrescriptionsController {
 
   @Get('my-prescriptions')
   async getMyPrescriptions(@Request() req) {
-    if (req.user.role === 'patient') {
+    const role = req.user.role?.toUpperCase();
+    if (role === 'PATIENT') {
       return this.prescriptionsService.findByPatient(req.user.id);
-    } else if (req.user.role === 'doctor') {
+    } else if (role === 'DOCTOR') {
       return this.prescriptionsService.findByDoctor(req.user.id);
     }
     return [];
@@ -36,21 +37,21 @@ export class PrescriptionsController {
 
   @Put(':id/assign-pharmacy')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async assignToPharmacy(@Param('id') id: string, @Body() body: { pharmacyId: string }) {
     return this.prescriptionsService.assignToPharmacy(id, body.pharmacyId);
   }
 
   @Put(':id/fill')
   @UseGuards(RolesGuard)
-  @Roles('pharmacy', 'admin')
+  @Roles('PHARMACY', 'ADMIN')
   async fillPrescription(@Param('id') id: string, @Body() body: { notes?: string }) {
     return this.prescriptionsService.fillPrescription(id, body.notes);
   }
 
   @Post('ai-suggestions')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async getAISuggestions(@Body() body: { diagnosis: string; patientHistory?: any }) {
     return this.prescriptionsService.getAISuggestions(
       body.diagnosis,
@@ -60,14 +61,14 @@ export class PrescriptionsController {
 
   @Get('templates')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async getTemplates(@Query('specialty') specialty?: string) {
     return this.prescriptionsService.getTemplates(specialty);
   }
 
   @Post('templates')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async createTemplate(@Request() req, @Body() templateData: any) {
     return this.prescriptionsService.createTemplate({
       ...templateData,
@@ -82,7 +83,7 @@ export class PrescriptionsController {
 
   @Post(':id/sign')
   @UseGuards(RolesGuard)
-  @Roles('doctor', 'admin')
+  @Roles('DOCTOR', 'ADMIN')
   async signPrescription(@Param('id') id: string, @Request() req, @Body() body: { signature: string }) {
     return this.prescriptionsService.signPrescription(id, body.signature, req.user.id);
   }

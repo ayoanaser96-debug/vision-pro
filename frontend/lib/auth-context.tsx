@@ -71,9 +71,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: any): Promise<User> => {
-    await api.post('/auth/register', data);
-    // Auto login after registration
-    return await login(data.email || data.phone || data.nationalId, data.password);
+    try {
+      const response = await api.post('/auth/register', data);
+      // Backend returns { access_token, user } after registration
+      if (response.data && response.data.user) {
+        const { access_token, user: userData } = response.data;
+        
+        // Store token and user
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        
+        console.log('User registered and logged in:', userData);
+        return userData;
+      }
+      
+      // Fallback: try to login if response format is different
+      return await login(data.email || data.phone || data.nationalId, data.password);
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      // Re-throw with better error message
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
   };
 
   const logout = () => {

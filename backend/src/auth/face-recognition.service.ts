@@ -56,11 +56,11 @@ export class FaceRecognitionService {
         // Create new face record
         const created = await this.prisma.userFace.create({
           data: {
-            userId,
-            faceDescriptor: descriptor,
+          userId,
+          faceDescriptor: descriptor,
             faceImage: cleanImage,
-            confidence: 0.95,
-            isActive: true,
+          confidence: 0.95,
+          isActive: true,
           },
         });
         this.logger.log(`Face registered for user ${userId}`);
@@ -109,19 +109,19 @@ export class FaceRecognitionService {
       // Compare with all registered faces
       for (const face of allFaces) {
         try {
-          const distance = this.calculateDistance(queryDescriptor, face.faceDescriptor);
+        const distance = this.calculateDistance(queryDescriptor, face.faceDescriptor);
           
           this.logger.debug(`Distance to user ${face.userId}: ${distance.toFixed(4)}`);
-          
-          if (distance < threshold && distance < bestDistance) {
-            bestDistance = distance;
-            bestMatch = {
-              userId: face.userId,
+        
+        if (distance < threshold && distance < bestDistance) {
+          bestDistance = distance;
+          bestMatch = {
+            userId: face.userId,
               confidence: Math.max(0, Math.min(1, 1 - distance)), // Convert distance to confidence (0-1)
               faceId: face.id,
               user: face.user,
-            };
-          }
+          };
+        }
         } catch (compareError: any) {
           this.logger.warn(`Failed to compare with face ${face.id}: ${compareError.message}`);
           continue;
@@ -280,7 +280,7 @@ export class FaceRecognitionService {
           // Clean up temp file
           if (existsSync(tempImagePath)) {
             try {
-              unlinkSync(tempImagePath);
+            unlinkSync(tempImagePath);
             } catch (cleanupError) {
               this.logger.warn('Failed to cleanup temp file', cleanupError);
             }
@@ -293,7 +293,7 @@ export class FaceRecognitionService {
                 this.logger.error(`Python script error: ${result.error}`);
                 resolve({ success: false, error: result.error });
               } else {
-                resolve(result);
+              resolve(result);
               }
             } catch (e: any) {
               this.logger.error('Failed to parse Python output', e);
@@ -311,7 +311,7 @@ export class FaceRecognitionService {
           // Clean up temp file
           if (existsSync(tempImagePath)) {
             try {
-              unlinkSync(tempImagePath);
+            unlinkSync(tempImagePath);
             } catch (cleanupError) {
               this.logger.warn('Failed to cleanup temp file', cleanupError);
             }
@@ -323,7 +323,7 @@ export class FaceRecognitionService {
         // Clean up temp file
         if (existsSync(tempImagePath)) {
           try {
-            unlinkSync(tempImagePath);
+          unlinkSync(tempImagePath);
           } catch (cleanupError) {
             this.logger.warn('Failed to cleanup temp file', cleanupError);
           }

@@ -5,7 +5,6 @@ import {
   UseGuards,
   Request,
   Get,
-  ValidationPipe,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -19,9 +18,10 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  async register(@Body(ValidationPipe) registerDto: RegisterDto) {
+  async register(@Body() registerDto: RegisterDto) {
     try {
       console.log('Registration request received:', { ...registerDto, password: '***' });
+      console.log('UserRole enum values:', Object.values(require('@prisma/client').UserRole));
       const createdUser = await this.authService.register(registerDto);
       // Return token + user so frontend can be logged in immediately after registration
       return this.authService.login(createdUser);
@@ -51,7 +51,7 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body(ValidationPipe) loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto) {
     try {
       console.log('Login request received:', { identifier: loginDto.identifier, password: '***' });
       const user = await this.authService.validateUser(loginDto.identifier, loginDto.password);

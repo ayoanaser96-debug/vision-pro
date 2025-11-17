@@ -23,10 +23,10 @@ Use these credentials to test the login:
 - **Password:** `password123`
 - **Dashboard:** `/dashboard/patient`
 
-### Analyst
-- **Email:** `analyst1@visionclinic.com`
+### Optometrist
+- **Email:** `optometrist1@visionclinic.com`
 - **Password:** `password123`
-- **Dashboard:** `/dashboard/analyst`
+- **Dashboard:** `/dashboard/optometrist`
 
 ### Pharmacy
 - **Email:** `pharmacy@visionclinic.com`

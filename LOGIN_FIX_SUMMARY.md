@@ -17,7 +17,7 @@ The login page was showing "success" but not redirecting to dashboards because:
 ### 2. All Dashboard Pages Fixed
 - ✅ **Patient Dashboard** - Now accepts `PATIENT` role
 - ✅ **Doctor Dashboard** - Now accepts `DOCTOR` and `ADMIN` roles  
-- ✅ **Analyst Dashboard** - Now accepts `ANALYST` and `ADMIN` roles
+- ✅ **Optometrist Dashboard** - Now accepts `OPTOMETRIST` and `ADMIN` roles
 - ✅ **Admin Dashboard** - Now accepts `ADMIN` role
 - ✅ **Pharmacy Dashboard** - Now accepts `PHARMACY` role
 - ✅ **Patient Journey** - Fixed role check
@@ -54,10 +54,10 @@ The login page was showing "success" but not redirecting to dashboards because:
 - **Password:** `password123`
 - **Redirects to:** `/dashboard/patient`
 
-### Analyst
-- **Email:** `analyst1@visionclinic.com`
+### Optometrist
+- **Email:** `optometrist1@visionclinic.com`
 - **Password:** `password123`
-- **Redirects to:** `/dashboard/analyst`
+- **Redirects to:** `/dashboard/optometrist`
 
 ### Pharmacy
 - **Email:** `pharmacy@visionclinic.com`
@@ -102,7 +102,7 @@ The login page was showing "success" but not redirecting to dashboards because:
 5. `frontend/app/dashboard/patient/journey/page.tsx` - Fixed role check
 6. `frontend/app/dashboard/patient/chat/page.tsx` - Fixed role check
 7. `frontend/app/dashboard/doctor/page.tsx` - Fixed role check
-8. `frontend/app/dashboard/analyst/page.tsx` - Fixed role check
+8. `frontend/app/dashboard/optometrist/page.tsx` - Fixed role check
 9. `frontend/app/dashboard/admin/page.tsx` - Fixed role check
 10. `frontend/app/dashboard/admin/journey/page.tsx` - Fixed role checks
 11. `frontend/components/dashboard-layout.tsx` - Fixed navigation filtering

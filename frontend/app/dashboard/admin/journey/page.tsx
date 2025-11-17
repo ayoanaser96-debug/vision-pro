@@ -45,7 +45,7 @@ interface PatientJourney {
 
 const stepConfig: Record<string, { title: string; icon: any; roles: string[] }> = {
   payment: { title: 'Payment', icon: CreditCard, roles: ['ADMIN'] },
-  analyst: { title: 'Analyst', icon: TestTube, roles: ['ADMIN', 'ANALYST'] },
+  optometrist: { title: 'Optometrist', icon: TestTube, roles: ['ADMIN', 'OPTOMETRIST'] },
   doctor: { title: 'Doctor', icon: Stethoscope, roles: ['ADMIN', 'DOCTOR'] },
   pharmacy: { title: 'Pharmacy', icon: Pill, roles: ['ADMIN', 'PHARMACY'] },
 };
@@ -60,7 +60,7 @@ export default function AdminJourneyPage() {
 
   useEffect(() => {
     const normalizedRole = user?.role?.toUpperCase() || '';
-    if (!authLoading && !['ADMIN', 'ANALYST', 'DOCTOR', 'PHARMACY'].includes(normalizedRole)) {
+    if (!authLoading && !['ADMIN', 'OPTOMETRIST', 'DOCTOR', 'PHARMACY'].includes(normalizedRole)) {
       router.push('/login');
     }
   }, [user, authLoading, router]);

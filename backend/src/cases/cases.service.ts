@@ -160,8 +160,8 @@ export class CasesService {
 
     const timeline = (caseData.timeline as any[]) || [];
     timeline.push({
-      ...entry,
-      timestamp: new Date(),
+            ...entry,
+            timestamp: new Date(),
     });
 
     return this.prisma.case.update({

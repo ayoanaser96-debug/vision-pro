@@ -14,7 +14,7 @@ import api from '@/lib/api';
 import { Eye, CheckCircle, XCircle, Brain, Activity, Upload, TestTube, Camera, FileText, Search } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-export default function AnalystDashboard() {
+export default function OptometristDashboard() {
   const { user, loading } = useAuth();
   const { theme, language, setTheme, setLanguage } = useTheme();
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function AnalystDashboard() {
 
   useEffect(() => {
     const normalizedRole = user?.role?.toUpperCase() || '';
-    if (!loading && !['ANALYST', 'ADMIN'].includes(normalizedRole)) {
+    if (!loading && !['OPTOMETRIST', 'ADMIN'].includes(normalizedRole)) {
       router.push('/login');
     }
   }, [user, loading, router]);
@@ -86,7 +86,7 @@ export default function AnalystDashboard() {
     if (!selectedTest || !notes.trim()) return;
 
     try {
-      await api.put(`/eye-tests/${selectedTest._id}/analyst-notes`, { notes });
+      await api.put(`/eye-tests/${selectedTest._id}/optometrist-notes`, { notes });
       toast({ title: 'Success', description: 'Notes added successfully' });
       setSelectedTest(null);
       setNotes('');
@@ -122,7 +122,7 @@ export default function AnalystDashboard() {
                 <Brain className="h-6 w-6 text-white" />
               </div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Analyst Dashboard
+                Optometrist Dashboard
               </h1>
             </div>
             <p className="text-muted-foreground">
@@ -285,7 +285,7 @@ export default function AnalystDashboard() {
                           variant="outline"
                           onClick={() => {
                             setSelectedTest(test);
-                            setNotes(test.analystNotes || '');
+                            setNotes(test.optometristNotes || '');
                           }}
                         >
                           View Details
@@ -457,9 +457,9 @@ export default function AnalystDashboard() {
                 </div>
               )}
 
-              {/* Analyst Notes */}
+              {/* Optometrist Notes */}
               <div>
-                <h3 className="font-medium mb-3">Analyst Notes</h3>
+                <h3 className="font-medium mb-3">Optometrist Notes</h3>
                 <textarea
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   rows={5}
@@ -492,7 +492,7 @@ export default function AnalystDashboard() {
         {/* Settings Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Analyst Settings</CardTitle>
+            <CardTitle>Optometrist Settings</CardTitle>
             <CardDescription>Configure preferences</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

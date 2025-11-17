@@ -70,7 +70,7 @@ export class EyeTestsService {
             specialty: true,
           },
         },
-        analyst: {
+        optometrist: {
           select: {
             firstName: true,
             lastName: true,
@@ -110,7 +110,7 @@ export class EyeTestsService {
             lastName: true,
           },
         },
-        analyst: {
+        optometrist: {
           select: {
             firstName: true,
             lastName: true,
@@ -127,7 +127,7 @@ export class EyeTestsService {
       include: {
         patient: true,
         doctor: true,
-        analyst: true,
+        optometrist: true,
       },
     });
     if (!test) {
@@ -143,12 +143,12 @@ export class EyeTestsService {
     });
   }
 
-  async addAnalystNotes(id: string, notes: string, analystId: string) {
+  async addOptometristNotes(id: string, notes: string, optometristId: string) {
     const updated = await this.prisma.eyeTest.update({
       where: { id },
       data: {
-        analystNotes: notes,
-        analystId,
+        optometristNotes: notes,
+        optometristId,
         status: TestStatus.DOCTOR_REVIEW,
       },
       include: {
@@ -156,10 +156,10 @@ export class EyeTestsService {
       },
     });
     
-    // Update patient journey - mark analyst step as complete
+    // Update patient journey - mark optometrist step as complete
     if (this.patientJourneyService && updated?.patientId) {
       try {
-        await this.patientJourneyService.markAnalystComplete(updated.patientId, analystId);
+        await this.patientJourneyService.markOptometristComplete(updated.patientId, optometristId);
       } catch (error: any) {
         console.log('Journey update skipped:', error.message);
       }

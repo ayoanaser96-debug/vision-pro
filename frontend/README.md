@@ -24,7 +24,7 @@ The application will be available at `http://localhost:3000`.
 ## Features
 
 - **Patient Portal**: Book appointments, view test results, manage prescriptions
-- **Analyst Dashboard**: Review and analyze eye tests with AI assistance
+- **Optometrist Dashboard**: Review and analyze eye tests with AI assistance
 - **Doctor Dashboard**: Review cases, create prescriptions, manage patients
 - **Admin Panel**: User management, system analytics
 - **Pharmacy Dashboard**: Manage prescriptions and orders
@@ -33,7 +33,7 @@ The application will be available at `http://localhost:3000`.
 
 - `/login` - Login/Register page
 - `/dashboard/patient` - Patient dashboard
-- `/dashboard/analyst` - Analyst dashboard
+- `/dashboard/optometrist` - Optometrist dashboard
 - `/dashboard/doctor` - Doctor dashboard
 - `/dashboard/admin` - Admin panel
 - `/dashboard/pharmacy` - Pharmacy dashboard

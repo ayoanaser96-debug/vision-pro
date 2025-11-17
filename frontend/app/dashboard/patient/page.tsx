@@ -5,12 +5,15 @@ import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-provider';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard-layout';
+import { BillingPanel } from '@/components/BillingPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { saveAs } from 'file-saver';
 import api from '@/lib/api';
 import { 
   Calendar, 
@@ -96,6 +99,8 @@ export default function PatientDashboard() {
   const [waitTime, setWaitTime] = useState<any>(null);
   const [bookingData, setBookingData] = useState<any>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [currentReceipt, setCurrentReceipt] = useState<any>(null);
   const [settings, setSettings] = useState({
     highContrast: false,
     largeText: false,
@@ -112,6 +117,7 @@ export default function PatientDashboard() {
   const [clinicIntelligence, setClinicIntelligence] = useState<any>(null);
   const [autoWorkflows, setAutoWorkflows] = useState<any[]>([]);
   const [personalizedExperience, setPersonalizedExperience] = useState<any>(null);
+  const [handledNotifications, setHandledNotifications] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const normalizedRole = user?.role?.toUpperCase() || '';
@@ -226,7 +232,12 @@ export default function PatientDashboard() {
           { type: 'preventive', action: 'Schedule annual eye exam', priority: 'high', confidence: 92 },
           { type: 'lifestyle', action: 'Reduce screen time', priority: 'medium', confidence: 78 },
           { type: 'nutrition', action: 'Increase omega-3 intake', priority: 'low', confidence: 65 }
-        ]
+        ],
+        treatmentProgress: 72,
+        sessionsCompleted: 5,
+        totalSessions: 8,
+        treatmentStatus: 'In Progress',
+        progressNote: 'Vision therapy and lifestyle changes are improving your health score.'
       });
       setPredictiveInsights({
         nextVisitPrediction: '2024-03-15',
@@ -254,7 +265,11 @@ export default function PatientDashboard() {
         clinicCapacity: Math.floor(Math.random() * 20) + 70,
         doctorAvailability: Math.floor(Math.random() * 5) + 3,
         emergencyAlerts: Math.floor(Math.random() * 3),
-        systemHealth: 98.5
+        systemHealth: 98.5,
+        openingTime: '08:00 AM',
+        closingTime: '08:00 PM',
+        nextAppointmentTime: '10:30 AM',
+        expectedVisitDuration: '45 minutes'
       });
     }
   };
@@ -391,31 +406,198 @@ export default function PatientDashboard() {
 
   const handlePayment = async (invoice: any) => {
     try {
-      // In production, this would integrate with payment gateway (ZainCash, etc.)
-      const paymentData = {
-        invoiceId: invoice.id,
-        amount: invoice.amount,
-        type: invoice.type,
-      };
-
-      // Simulate payment processing
+      // Process payment through backend
       toast({ 
         title: 'Payment Processing', 
         description: `Processing payment of $${invoice.amount}...` 
       });
 
-      // Simulate API call
-      setTimeout(() => {
-        toast({ 
-          title: 'Payment Successful', 
-          description: `Payment of $${invoice.amount} processed successfully` 
-        });
-        loadAllData();
-      }, 2000);
+      const paymentData = {
+        patientId: user?.id,
+        amount: invoice.amount,
+        invoiceId: invoice.id || invoice.transactionId,
+        description: invoice.description || `Payment for ${invoice.type}`,
+      };
+
+      const response = await api.post('/billing/payment', paymentData);
+
+      toast({ 
+        title: 'Payment Successful', 
+        description: `Payment of $${invoice.amount} processed successfully` 
+      });
+
+      // Show receipt immediately - fetch full receipt data from backend
+      if (response.data.transactionId) {
+        try {
+          // Fetch complete receipt data from backend
+          const receiptResponse = await api.get(`/billing/receipt/${response.data.transactionId}`);
+          if (receiptResponse.data) {
+            setCurrentReceipt(receiptResponse.data);
+            setShowReceiptModal(true);
+          } else {
+            // Fallback to response data
+            const receiptData = {
+              transactionId: response.data.transactionId,
+              amount: response.data.amount || invoice.amount,
+              description: paymentData.description,
+              paidAt: response.data.paidAt || new Date(),
+              clinicName: 'Vision Clinic',
+              patientName: user?.firstName + ' ' + user?.lastName,
+            };
+            setCurrentReceipt(receiptData);
+            setShowReceiptModal(true);
+          }
+        } catch (error) {
+          // Fallback if receipt fetch fails
+          const receiptData = {
+            transactionId: response.data.transactionId,
+            amount: response.data.amount || invoice.amount,
+            description: paymentData.description,
+            paidAt: response.data.paidAt || new Date(),
+            clinicName: 'Vision Clinic',
+            patientName: user?.firstName + ' ' + user?.lastName,
+          };
+          setCurrentReceipt(receiptData);
+          setShowReceiptModal(true);
+        }
+      }
+
+      loadAllData();
     } catch (error: any) {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Payment failed',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownloadReceipt = async (transactionId: string) => {
+    try {
+      // Get the API base URL
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const token = localStorage.getItem('token');
+      
+      // Open download URL with authentication token
+      const downloadUrl = `${apiBaseUrl}/billing/receipt/${transactionId}/download`;
+      
+      // Create a temporary link with token in header
+      // Since window.open doesn't support custom headers, we'll use fetch then download
+      const response = await fetch(downloadUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `receipt-${transactionId}.html`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast({
+          title: 'Receipt Downloaded',
+          description: 'Receipt has been downloaded successfully',
+        });
+      } else {
+        throw new Error('Failed to download receipt');
+      }
+    } catch (error: any) {
+      console.error('Download receipt error:', error);
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to download receipt',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleViewReceipt = async (invoice: any) => {
+    try {
+      const transactionId = invoice.transactionId || invoice.id;
+      
+      // Try to fetch receipt from backend if transactionId exists
+      if (transactionId && invoice.status === 'paid') {
+        try {
+          const response = await api.get(`/billing/receipt/${transactionId}`);
+          if (response.data) {
+            // Use backend receipt data
+            setCurrentReceipt(response.data);
+            setShowReceiptModal(true);
+            return;
+          }
+        } catch (error) {
+          // If backend receipt not found, fall back to invoice data
+          console.log('Receipt not found in backend, using invoice data');
+        }
+      }
+      
+      // Fallback: Create receipt from invoice data
+      const receiptData = {
+        transactionId: transactionId,
+        amount: invoice.amount,
+        description: invoice.description || `Payment for ${invoice.type}`,
+        paidAt: invoice.paidAt || invoice.date || new Date(),
+        clinicName: 'Vision Clinic',
+        patientName: user?.firstName + ' ' + user?.lastName,
+      };
+      setCurrentReceipt(receiptData);
+      setShowReceiptModal(true);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load receipt',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const downloadReceipt = (invoice: any) => {
+    try {
+      const patientName = user?.firstName + ' ' + user?.lastName || 'Patient';
+      const transactionId = invoice.transactionId || invoice.id;
+      const invoiceDate = new Date(invoice.date || invoice.paidAt || new Date()).toLocaleDateString();
+      
+      // Create receipt text
+      const receipt = `
+Receipt
+------------------------
+Date: ${invoiceDate}
+Transaction ID: ${transactionId}
+Customer: ${patientName}
+Invoice Type: ${invoice.type || 'N/A'}
+Description: ${invoice.description || 'N/A'}
+
+Items:
+${invoice.items && invoice.items.length > 0 
+  ? invoice.items.map((item: any) => `  ${item.name} x${item.quantity || 1} - $${item.price || 0}`).join('\n')
+  : `  ${invoice.description || 'Service'} - $${invoice.amount}`
+}
+
+Total: $${invoice.amount}
+Status: ${invoice.status || 'paid'}
+------------------------
+Thank you for your payment!
+Vision Clinic - Smart Eye Care Solutions
+      `.trim();
+
+      // Convert receipt to blob and download
+      const blob = new Blob([receipt], { type: 'text/plain;charset=utf-8' });
+      saveAs(blob, `Receipt-${transactionId}.txt`);
+      
+      toast({
+        title: 'Receipt Downloaded',
+        description: 'Receipt has been downloaded successfully',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: 'Failed to download receipt',
         variant: 'destructive',
       });
     }
@@ -551,6 +733,118 @@ export default function PatientDashboard() {
     left: trend.visualAcuityLeft?.replace(/[^0-9.]/g, '') || '0',
   }));
 
+  const appointmentTimeline =
+    unifiedJourney?.timeline?.filter((item: any) => item.type === 'appointment') || [];
+
+  const now = new Date();
+  const normalizedAppointments = appointmentTimeline.map((item: any) => {
+    const appointmentDate =
+      item.date ||
+      item.data?.appointmentDate ||
+      item.data?.scheduledDate ||
+      item.data?.nextAppointment ||
+      item.data?.startDate;
+    const parsedDate = appointmentDate ? new Date(appointmentDate) : null;
+    return {
+      ...item,
+      parsedDate,
+    };
+  });
+
+  const futureAppointments = normalizedAppointments
+    .filter((item: any) => item.parsedDate && item.parsedDate >= now)
+    .sort(
+      (a: any, b: any) =>
+        (a.parsedDate as Date).getTime() - (b.parsedDate as Date).getTime(),
+    );
+
+  const pastAppointments = normalizedAppointments
+    .filter((item: any) => item.parsedDate && item.parsedDate < now)
+    .sort(
+      (a: any, b: any) =>
+        (b.parsedDate as Date).getTime() - (a.parsedDate as Date).getTime(),
+    );
+
+  const upcomingAppointment = futureAppointments[0] || null;
+  const lastAppointment = pastAppointments[0] || null;
+  const nextAppointmentDate = upcomingAppointment?.parsedDate || null;
+  const appointmentDoctor =
+    upcomingAppointment?.data?.doctorName ||
+    upcomingAppointment?.data?.doctor ||
+    upcomingAppointment?.title ||
+    'your specialist';
+  const appointmentTimeLabel =
+    upcomingAppointment?.data?.appointmentTime ||
+    (nextAppointmentDate
+      ? nextAppointmentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : null);
+  const expectedVisitDuration =
+    upcomingAppointment?.data?.expectedDuration ||
+    realTimeMetrics?.expectedVisitDuration ||
+    '45 minutes';
+
+  const clinicOpeningTime = realTimeMetrics?.openingTime || '08:00 AM';
+  const clinicClosingTime = realTimeMetrics?.closingTime || '08:00 PM';
+  const suggestedArrivalTime =
+    nextAppointmentDate
+      ? new Date(nextAppointmentDate.getTime() - 15 * 60000).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : null;
+
+  const derivedAlerts: any[] = [];
+
+  if (nextAppointmentDate) {
+    derivedAlerts.push({
+      id: 'appointment-reminder-24h',
+      title: 'Appointment Reminder • 1 Day Before',
+      message: `You have an appointment tomorrow at ${appointmentTimeLabel} with ${appointmentDoctor}.`,
+      priority: 'info',
+      actionable: true,
+    });
+    derivedAlerts.push({
+      id: 'appointment-reminder-2h',
+      title: 'Appointment Reminder • 2 Hours',
+      message: `Get ready! Your appointment starts in 2 hours (${appointmentTimeLabel}).`,
+      priority: 'urgent',
+      actionable: true,
+    });
+  }
+
+  const needsMonthlyCheckup = (() => {
+    if (!lastAppointment?.parsedDate) return true;
+    const daysSinceLast =
+      (now.getTime() - lastAppointment.parsedDate.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceLast >= 28;
+  })();
+
+  if (needsMonthlyCheckup) {
+    const dueDate = new Date(now);
+    dueDate.setDate(dueDate.getDate() + (nextAppointmentDate ? 0 : 7));
+    derivedAlerts.push({
+      id: 'monthly-checkup-reminder',
+      title: 'Monthly Checkup Reminder',
+      message: `Your monthly eye health checkup is due around ${dueDate.toLocaleDateString()}. Schedule a visit to stay on track.`,
+      priority: 'medium',
+      actionable: true,
+    });
+  }
+
+  const combinedSmartNotifications = [...derivedAlerts, ...(smartNotifications || [])];
+
+  const handleNotificationAction = (notification: any) => {
+    if (!notification?.id) return;
+    setHandledNotifications((prev) => ({
+      ...prev,
+      [notification.id]: true,
+    }));
+    toast({
+      title: 'Action completed',
+      description: notification.title || 'Reminder acknowledged',
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6 patient-portal" data-portal="patient">
@@ -607,6 +901,33 @@ export default function PatientDashboard() {
                       <span className="text-lg font-bold text-green-600">{aiRecommendations.healthScore}%</span>
                     </div>
                   </div>
+                  {typeof aiRecommendations.treatmentProgress === 'number' && (
+                    <div className="p-3 rounded-lg bg-white/70 border border-purple-100 shadow-sm">
+                      <div className="flex items-center justify-between text-sm font-medium text-foreground mb-2">
+                        <span>Treatment Progress</span>
+                        <span>{aiRecommendations.treatmentProgress}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-purple-100 rounded-full overflow-hidden mb-2">
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-1000"
+                          style={{ width: `${aiRecommendations.treatmentProgress}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          Sessions {aiRecommendations.sessionsCompleted || 0} / {aiRecommendations.totalSessions || 0}
+                        </span>
+                        <Badge className="bg-purple-100 text-purple-700">
+                          {aiRecommendations.treatmentStatus || 'In progress'}
+                        </Badge>
+                      </div>
+                      {aiRecommendations.progressNote && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {aiRecommendations.progressNote}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {aiRecommendations.recommendations?.slice(0, 2).map((rec: any, idx: number) => (
                     <div key={idx} className="p-2 bg-purple-50 rounded-lg border border-purple-200">
                       <div className="flex items-start gap-2">
@@ -658,6 +979,20 @@ export default function PatientDashboard() {
                       <div className="text-xs text-muted-foreground">Capacity</div>
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-blue-50 rounded-lg text-sm">
+                      <p className="font-semibold text-blue-900">Clinic Hours</p>
+                      <p className="text-muted-foreground">{clinicOpeningTime} - {clinicClosingTime}</p>
+                    </div>
+                    <div className="p-3 bg-indigo-50 rounded-lg text-sm">
+                      <p className="font-semibold text-indigo-900">Your Appointment</p>
+                      <p className="text-muted-foreground">
+                        {nextAppointmentDate
+                          ? `${nextAppointmentDate.toLocaleDateString()} • ${appointmentTimeLabel}`
+                          : 'Not scheduled'}
+                      </p>
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between p-2 bg-emerald-50 rounded-lg">
                     <div className="flex items-center gap-2">
                       <Zap className="h-4 w-4 text-emerald-600" />
@@ -665,12 +1000,25 @@ export default function PatientDashboard() {
                     </div>
                     <span className="text-sm font-bold text-emerald-600">{realTimeMetrics.systemHealth}%</span>
                   </div>
+                  {nextAppointmentDate && (
+                    <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-100 text-sm space-y-1">
+                      <p className="font-semibold text-blue-900">Visit Plan</p>
+                      {suggestedArrivalTime && (
+                        <p className="text-muted-foreground">
+                          Arrive by <span className="font-semibold">{suggestedArrivalTime}</span> for check-in.
+                        </p>
+                      )}
+                      <p className="text-muted-foreground">
+                        Expected time in clinic: <span className="font-semibold">{expectedVisitDuration}</span>.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
 
             {/* Smart Notifications */}
-            {smartNotifications.length > 0 && (
+            {combinedSmartNotifications.length > 0 && (
               <Card className="card-modern border-l-4 border-l-orange-500 hover:border-orange-500/50">
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
@@ -684,7 +1032,7 @@ export default function PatientDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {smartNotifications.slice(0, 3).map((notification: any) => (
+                  {combinedSmartNotifications.slice(0, 3).map((notification: any) => (
                     <div key={notification.id} className="p-2 bg-orange-50 rounded-lg border border-orange-200">
                       <div className="flex items-start gap-2">
                         <Sparkles className="h-4 w-4 text-orange-600 mt-0.5" />
@@ -692,8 +1040,14 @@ export default function PatientDashboard() {
                           <p className="text-sm font-medium text-foreground">{notification.title}</p>
                           <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
                           {notification.actionable && (
-                            <Button size="sm" variant="outline" className="mt-2 text-xs h-6">
-                              Take Action
+                            <Button
+                              size="sm"
+                              variant={handledNotifications[notification.id] ? 'secondary' : 'outline'}
+                              className="mt-2 text-xs h-6"
+                              disabled={handledNotifications[notification.id]}
+                              onClick={() => handleNotificationAction(notification)}
+                            >
+                              {handledNotifications[notification.id] ? 'Action Done' : 'Take Action'}
                             </Button>
                           )}
                         </div>
@@ -1567,102 +1921,12 @@ export default function PatientDashboard() {
           {/* Billing, Analytics, Communication, Monitoring, Settings tabs would continue with similar structure */}
           
           <TabsContent value="billing" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Billing & Insurance</CardTitle>
-                <CardDescription>Transparent billing history, online payments, insurance integration</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {billingHistory && billingHistory.invoices && billingHistory.invoices.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-3 mb-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-sm">Total Invoices</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">{billingHistory.summary.totalInvoices}</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-sm">Total Amount</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">${billingHistory.summary.totalAmount?.toLocaleString() || '0'}</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-sm">Pending Amount</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold text-orange-600">
-                            ${billingHistory.summary.pendingAmount?.toLocaleString() || '0'}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="space-y-3">
-                      {billingHistory.invoices.slice(0, 10).map((invoice: any, idx: number) => (
-                        <Card key={idx}>
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  {invoice.type === 'appointment' && <Calendar className="h-4 w-4" />}
-                                  {invoice.type === 'prescription' && <Pill className="h-4 w-4" />}
-                                  <p className="font-medium">{invoice.description}</p>
-                                  <Badge className={invoice.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-                                    {invoice.status}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {new Date(invoice.date).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <p className="text-lg font-bold">${invoice.amount.toLocaleString()}</p>
-                                {invoice.items && invoice.items.length > 0 && (
-                                  <div className="mt-2 p-2 bg-accent/10 dark:bg-accent/20 rounded text-sm">
-                                    <p className="font-medium mb-1">Items:</p>
-                                    <ul className="text-muted-foreground space-y-1">
-                                      {invoice.items.map((item: any, i: number) => (
-                                        <li key={i}>• {item.name} - ${item.price}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleDownloadReport(invoice)}
-                                >
-                                  <Download className="h-4 w-4 mr-1" />
-                                  Download
-                                </Button>
-                                {invoice.status === 'pending' && (
-                                  <Button 
-                                    size="sm"
-                                    onClick={() => handlePayment(invoice)}
-                                  >
-                                    <CreditCard className="h-4 w-4 mr-1" />
-                                    Pay Now
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">No billing history</p>
-                )}
-              </CardContent>
-            </Card>
+            <BillingPanel
+              billingHistory={billingHistory}
+              onRefresh={loadAllData}
+              onPayment={handlePayment}
+              patientName={`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Patient'}
+            />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
@@ -1978,6 +2242,95 @@ export default function PatientDashboard() {
             </Card>
           </div>
         )}
+
+        {/* Receipt Modal */}
+        <Dialog open={showReceiptModal} onOpenChange={setShowReceiptModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Payment Receipt</DialogTitle>
+              <DialogDescription>
+                Receipt for your payment transaction
+              </DialogDescription>
+            </DialogHeader>
+            
+            {currentReceipt && (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 p-6 rounded-lg">
+                  <div className="text-center mb-4">
+                    <h3 className="text-2xl font-bold text-primary">Vision Clinic</h3>
+                    <p className="text-sm text-muted-foreground">Smart Eye Care Solutions</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Patient Name</p>
+                      <p className="font-semibold">{currentReceipt.patientName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Transaction ID</p>
+                      <p className="font-mono text-sm">{currentReceipt.transactionId}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Date</p>
+                      <p className="font-semibold">
+                        {new Date(currentReceipt.paidAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Time</p>
+                      <p className="font-semibold">
+                        {new Date(currentReceipt.paidAt).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm text-muted-foreground">Description</p>
+                    <p className="font-medium">{currentReceipt.description}</p>
+                  </div>
+                  <div className="flex justify-between items-center text-lg font-bold mt-4 pt-4 border-t">
+                    <p>Total Amount</p>
+                    <p className="text-primary">${currentReceipt.amount}</p>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg text-center">
+                  <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                  <p className="font-semibold text-green-800 dark:text-green-200">Payment Successful</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    Thank you for your payment
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (currentReceipt?.transactionId) {
+                    handleDownloadReceipt(currentReceipt.transactionId);
+                  }
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Receipt
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.print()}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+              <Button onClick={() => setShowReceiptModal(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

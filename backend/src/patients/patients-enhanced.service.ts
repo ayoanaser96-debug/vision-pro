@@ -18,7 +18,7 @@ export class PatientsEnhancedService {
       }),
       this.prisma.eyeTest.findMany({
         where: { patientId },
-        include: { doctor: true, analyst: true },
+        include: { doctor: true, optometrist: true },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.prescription.findMany({
@@ -228,7 +228,7 @@ export class PatientsEnhancedService {
           status: test.status,
         },
         doctorNotes: test.doctorNotes,
-        analystNotes: test.analystNotes,
+        optometristNotes: test.optometristNotes,
         images: Array.isArray(retinaImages) ? retinaImages : [],
       });
     });
@@ -505,6 +505,7 @@ export class PatientsEnhancedService {
       invoices.push({
         type: 'appointment',
         id: apt.id,
+        transactionId: `TXN-APT-${apt.id.substring(0, 8)}`, // Generate transaction ID
         date: apt.appointmentDate,
         description: `Consultation with Dr. ${apt.doctor?.firstName || 'Doctor'}`,
         amount: 100, // Default consultation fee
@@ -526,6 +527,7 @@ export class PatientsEnhancedService {
       invoices.push({
         type: 'prescription',
         id: pres.id,
+        transactionId: `TXN-RX-${pres.id.substring(0, 8)}`, // Generate transaction ID
         date: pres.createdAt,
         description: `Prescription from Dr. ${pres.doctor?.firstName || 'Doctor'}`,
         amount: total,
@@ -613,14 +615,14 @@ export class PatientsEnhancedService {
     return Math.round((completed / prescriptions.length) * 100);
   }
 
-  // 8. Final Results Summary (Doctor diagnosis, Analyst result, Pharmacy prescription)
+  // 8. Final Results Summary (Doctor diagnosis, Optometrist result, Pharmacy prescription)
   async getFinalResultsSummary(patientId: string) {
     const [latestTest, latestPrescription, latestCase] = await Promise.all([
       this.prisma.eyeTest.findFirst({
         where: { patientId },
         include: {
           doctor: true,
-          analyst: true,
+          optometrist: true,
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -641,19 +643,19 @@ export class PatientsEnhancedService {
       }),
     ]);
 
-    const analystSummary = latestTest
+    const optometristSummary = latestTest
       ? {
           testId: latestTest.id,
           date: latestTest.createdAt,
-          analyst: latestTest.analyst
-            ? `${latestTest.analyst.firstName} ${latestTest.analyst.lastName}`
+          optometrist: latestTest.optometrist
+            ? `${latestTest.optometrist.firstName} ${latestTest.optometrist.lastName}`
             : null,
           doctor: latestTest.doctor
             ? `${latestTest.doctor.firstName} ${latestTest.doctor.lastName}`
             : null,
           status: latestTest.status,
           aiAnalysis: latestTest.aiAnalysis || null,
-          notes: latestTest.analystNotes || latestTest.doctorNotes || null,
+          notes: latestTest.optometristNotes || latestTest.doctorNotes || null,
         }
       : null;
 
@@ -687,7 +689,7 @@ export class PatientsEnhancedService {
       : null;
 
     return {
-      analystSummary,
+      optometristSummary,
       diagnosisSummary,
       prescriptionSummary,
       updatedAt: new Date(),

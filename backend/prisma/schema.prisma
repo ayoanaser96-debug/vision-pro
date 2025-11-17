@@ -12,7 +12,7 @@ datasource db {
 
 enum UserRole {
   PATIENT
-  ANALYST
+  OPTOMETRIST
   DOCTOR
   ADMIN
   PHARMACY
@@ -106,7 +106,7 @@ enum DocumentType {
 enum JourneyStep {
   REGISTRATION
   PAYMENT
-  ANALYST
+  OPTOMETRIST
   DOCTOR
   PHARMACY
   COMPLETED
@@ -144,7 +144,7 @@ model User {
   doctorAppointments Appointment[] @relation("DoctorAppointments")
   eyeTests          EyeTest[]
   doctorEyeTests    EyeTest[]      @relation("DoctorEyeTests")
-  analystEyeTests   EyeTest[]      @relation("AnalystEyeTests")
+  optometristEyeTests   EyeTest[]      @relation("OptometristEyeTests")
   prescriptions     Prescription[]
   doctorPrescriptions Prescription[] @relation("DoctorPrescriptions")
   pharmacyPrescriptions Prescription[] @relation("PharmacyPrescriptions")
@@ -203,8 +203,8 @@ model EyeTest {
   patient           User       @relation(fields: [patientId], references: [id], onDelete: Cascade)
   doctorId          String?
   doctor            User?      @relation("DoctorEyeTests", fields: [doctorId], references: [id])
-  analystId         String?
-  analyst           User?      @relation("AnalystEyeTests", fields: [analystId], references: [id])
+  optometristId         String?
+  optometrist           User?      @relation("OptometristEyeTests", fields: [optometristId], references: [id])
   status            TestStatus @default(PENDING)
   visualAcuityRight String?
   visualAcuityLeft  String?
@@ -213,7 +213,7 @@ model EyeTest {
   refractionLeft    Json?      // {sphere, cylinder, axis}
   retinaImages      Json       // Array of image URLs/strings
   aiAnalysis        Json?      // Complex AI analysis object
-  analystNotes      String?
+  optometristNotes      String?
   doctorNotes       String?
   doctorApproved    Boolean?
   rawData           Json?

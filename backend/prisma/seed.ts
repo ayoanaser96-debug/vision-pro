@@ -57,21 +57,21 @@ async function main() {
   });
   console.log('✅ Created doctor users');
 
-  // Create Analyst User
-  const analyst1 = await prisma.user.upsert({
-    where: { email: 'analyst1@visionclinic.com' },
+  // Create Optometrist User
+  const optometrist1 = await prisma.user.upsert({
+    where: { email: 'optometrist1@visionclinic.com' },
     update: {},
     create: {
-      email: 'analyst1@visionclinic.com',
+      email: 'optometrist1@visionclinic.com',
       password: hashedPassword,
       firstName: 'Ahmed',
       lastName: 'Hassan',
-      role: 'ANALYST',
+      role: 'OPTOMETRIST',
       status: 'ACTIVE',
       emailVerified: true,
     },
   });
-  console.log('✅ Created analyst user');
+  console.log('✅ Created optometrist user');
 
   // Create Pharmacy User
   const pharmacy1 = await prisma.user.upsert({
@@ -189,7 +189,39 @@ async function main() {
   // Create Appointments
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 7);
 
+  // Completed appointments (for billing/receipt testing)
+  await prisma.appointment.create({
+    data: {
+      patientId: patient1User.id,
+      doctorId: doctor1.id,
+      appointmentDate: lastWeek,
+      appointmentTime: '9:00 AM',
+      reason: 'Eye examination',
+      status: 'COMPLETED',
+      notes: 'Completed eye examination. Prescribed glasses.',
+    },
+  });
+
+  await prisma.appointment.create({
+    data: {
+      patientId: patient1User.id,
+      doctorId: doctor2.id,
+      appointmentDate: yesterday,
+      appointmentTime: '2:00 PM',
+      reason: 'Follow-up consultation',
+      status: 'COMPLETED',
+      notes: 'Follow-up completed. Patient doing well.',
+    },
+  });
+
+  // Future appointments
   await prisma.appointment.create({
     data: {
       patientId: patient1User.id,
@@ -212,26 +244,27 @@ async function main() {
       status: 'PENDING',
     },
   });
-  console.log('✅ Created appointments');
+  console.log('✅ Created appointments (including completed ones for billing)');
 
   // Create Eye Tests
   await prisma.eyeTest.create({
     data: {
       patientId: patient1User.id,
-      analystId: analyst1.id,
+      optometristId: optometrist1.id,
       doctorId: doctor1.id,
       visualAcuityRight: '20/40',
       visualAcuityLeft: '20/30',
       refractionRight: { sphere: -2.25, cylinder: -0.5, axis: 180 },
       refractionLeft: { sphere: -2.0, cylinder: -0.75, axis: 175 },
       retinaImages: [],
-      analystNotes: 'Mild myopia detected',
+      optometristNotes: 'Mild myopia detected',
       status: 'COMPLETED',
     },
   });
   console.log('✅ Created eye tests');
 
   // Create Prescriptions
+  // Completed prescription (generates paid invoice)
   await prisma.prescription.create({
     data: {
       patientId: patient1User.id,
@@ -250,10 +283,28 @@ async function main() {
         type: 'Progressive lenses',
       },
       notes: 'Use artificial tears regularly. Wear glasses for all activities.',
+      status: 'COMPLETED',
+    },
+  });
+
+  // Filled prescription (generates pending invoice)
+  await prisma.prescription.create({
+    data: {
+      patientId: patient1User.id,
+      doctorId: doctor2.id,
+      medications: [
+        {
+          name: 'Eye Drops',
+          dosage: '2 drops',
+          frequency: '3 times daily',
+          duration: '14 days',
+        },
+      ],
+      notes: 'For dry eye treatment',
       status: 'FILLED',
     },
   });
-  console.log('✅ Created prescriptions');
+  console.log('✅ Created prescriptions (completed and filled for billing)');
 
   // Create Cases
   await prisma.case.create({
@@ -323,7 +374,7 @@ async function main() {
   console.log('📝 Test Credentials:');
   console.log('Admin:    admin@visionclinic.com / password123');
   console.log('Doctor:   dr.sarah@visionclinic.com / password123');
-  console.log('Analyst:  analyst1@visionclinic.com / password123');
+  console.log('Optometrist:  optometrist1@visionclinic.com / password123');
   console.log('Pharmacy: pharmacy@visionclinic.com / password123');
   console.log('Patient:  ahmed.ali@email.com / password123');
   console.log('\n🌐 Access at: http://localhost:3000');

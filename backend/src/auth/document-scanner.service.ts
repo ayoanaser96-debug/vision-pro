@@ -38,9 +38,9 @@ export class DocumentScannerService {
       // Check if document already exists
       const existing = await this.prisma.userDocument.findFirst({
         where: {
-          userId,
-          documentType,
-          isActive: true,
+        userId,
+        documentType,
+        isActive: true,
         },
       });
 
@@ -55,8 +55,8 @@ export class DocumentScannerService {
             ocrConfidence,
             metadata: {
               ...(existing.metadata as any || {}),
-              scannedAt: new Date(),
-              imageQuality: this.assessImageQuality(frontImage),
+          scannedAt: new Date(),
+          imageQuality: this.assessImageQuality(frontImage),
             } as any,
           },
         });
@@ -64,16 +64,16 @@ export class DocumentScannerService {
         // Create new document
         return this.prisma.userDocument.create({
           data: {
-            userId,
-            documentType,
-            frontImage,
-            backImage,
+          userId,
+          documentType,
+          frontImage,
+          backImage,
             extractedData: extractedData as any,
-            ocrConfidence,
-            metadata: {
-              scannedAt: new Date(),
-              imageQuality: this.assessImageQuality(frontImage),
-              verified: false,
+          ocrConfidence,
+          metadata: {
+            scannedAt: new Date(),
+            imageQuality: this.assessImageQuality(frontImage),
+            verified: false,
             } as any,
             isActive: true,
           },

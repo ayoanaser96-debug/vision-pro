@@ -17,7 +17,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('pharmacy')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('pharmacy', 'admin')
+@Roles('PHARMACY', 'ADMIN')
 export class PharmacyController {
   constructor(
     private readonly pharmacyService: PharmacyService,
@@ -28,7 +28,7 @@ export class PharmacyController {
   async getPrescriptions(@Request() req) {
     // For pharmacy users, get prescriptions assigned to them
     // For admin, get all pending prescriptions
-    if (req.user.role === 'admin') {
+    if (req.user.role?.toUpperCase() === 'ADMIN') {
       return this.pharmacyService.getAllPendingPrescriptions();
     }
     return this.pharmacyEnhancedService.getPrescriptionsForPharmacy(req.user.id);
@@ -160,7 +160,7 @@ export class PharmacyController {
   async checkPrescriptionAvailability(@Param('id') id: string, @Request() req) {
     return this.pharmacyEnhancedService.checkPrescriptionAvailability(
       id,
-      req.user.role === 'admin' ? undefined : req.user.id,
+      req.user.role?.toUpperCase() === 'ADMIN' ? undefined : req.user.id,
     );
   }
 
@@ -175,7 +175,7 @@ export class PharmacyController {
       id,
       body.reason,
       body.missingItems,
-      req.user.role === 'admin' ? undefined : req.user.id,
+      req.user.role?.toUpperCase() === 'ADMIN' ? undefined : req.user.id,
     );
   }
 }

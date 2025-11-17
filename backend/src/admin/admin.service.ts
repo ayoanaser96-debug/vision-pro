@@ -93,14 +93,14 @@ export class AdminService {
     const [
       totalPatients,
       totalDoctors,
-      totalAnalysts,
+      totalOptometrists,
       totalAppointments,
       pendingTests,
       completedTests,
     ] = await Promise.all([
       this.prisma.user.count({ where: { role: UserRole.PATIENT } }),
       this.prisma.user.count({ where: { role: UserRole.DOCTOR } }),
-      this.prisma.user.count({ where: { role: UserRole.ANALYST } }),
+      this.prisma.user.count({ where: { role: UserRole.OPTOMETRIST } }),
       this.appointmentsService.findAll().then(apts => apts.length),
       this.eyeTestsService.findPendingForAnalysis().then(tests => tests.length),
       this.eyeTestsService.findAnalyzedForDoctor().then(tests => tests.length),
@@ -113,7 +113,7 @@ export class AdminService {
       users: {
         patients: totalPatients,
         doctors: totalDoctors,
-        analysts: totalAnalysts,
+        optometrists: totalOptometrists,
       },
       tests: {
         pending: pendingTests,

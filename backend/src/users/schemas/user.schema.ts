@@ -5,7 +5,7 @@ export type UserDocument = User & Document;
 
 export enum UserRole {
   PATIENT = 'patient',
-  ANALYST = 'analyst',
+  OPTOMETRIST = 'optometrist',
   DOCTOR = 'doctor',
   ADMIN = 'admin',
   PHARMACY = 'pharmacy',

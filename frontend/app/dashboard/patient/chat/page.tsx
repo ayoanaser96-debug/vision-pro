@@ -112,7 +112,7 @@ export default function PatientChatPage() {
     try {
       setLoadingContacts(true);
       
-      // Get doctors, analysts, and pharmacists from appointments and cases
+      // Get doctors, optometrists, and pharmacists from appointments and cases
       const [appointmentsRes, prescriptionsRes] = await Promise.all([
         api.get('/appointments/my-appointments').catch(() => ({ data: [] })),
         api.get('/prescriptions/my-prescriptions').catch(() => ({ data: [] })),
@@ -411,7 +411,7 @@ export default function PatientChatPage() {
                   Select a contact to start chatting
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Choose a doctor, analyst, or pharmacist from the sidebar
+                  Choose a doctor, optometrist, or pharmacist from the sidebar
                 </p>
               </div>
             </div>
